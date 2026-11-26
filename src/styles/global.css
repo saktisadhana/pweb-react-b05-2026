@@ -1,0 +1,233 @@
+/* Styling sementara dari Marvel. Sakti silakan rombak/ganti total. */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f5f7fb;
+  color: #1e293b;
+}
+
+button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #1d6ce0;
+  color: white;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #e2e8f0;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  background: white;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
+
+input,
+select {
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 24px;
+  background: #0f2f5f;
+  color: white;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+  padding: 20px 24px;
+  align-items: start;
+}
+
+.panel {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.grow {
+  flex: 1;
+  min-width: 180px;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 14px;
+  margin: 4px 0;
+}
+
+.error-text {
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.tag {
+  padding: 4px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f1f5f9;
+  font-size: 13px;
+}
+
+.tag-missing {
+  color: #dc2626;
+  border-style: dashed;
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.tag-remove {
+  margin-left: 6px;
+  padding: 0;
+  background: none;
+  color: #64748b;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: #e2e8f0;
+}
+
+.badge-green {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-yellow {
+  background: #fef9c3;
+  color: #a16207;
+}
+
+.badge-red {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.card h3 {
+  font-size: 16px;
+  margin: 8px 0;
+}
+
+.card-head,
+.card-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.card-foot {
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 10px;
+}
+
+.state-box {
+  padding: 20px;
+  text-align: center;
+  color: #64748b;
+}
+
+.state-error {
+  color: #b91c1c;
+}
+
+.banner-danger {
+  padding: 12px 16px;
+  margin: 20px 24px 0;
+  border-left: 4px solid #dc2626;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.banner-danger p {
+  margin: 4px 0 0;
+}
+
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

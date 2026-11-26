@@ -1,0 +1,139 @@
+{
+  "jobs": [
+    {
+      "id": 1001,
+      "title": "Frontend Engineering Intern (React & TypeScript)",
+      "company_name": "Nusantara Cloud Tech",
+      "category": "Software Development",
+      "candidate_required_location": "Surabaya (Hybrid)",
+      "salary": "Rp 4.500.000",
+      "tags": ["React", "TypeScript", "CSS", "Git", "REST API"]
+    },
+    {
+      "id": 1002,
+      "title": "Full-Stack Web Developer Intern",
+      "company_name": "Garuda FinTech",
+      "category": "Software Development",
+      "candidate_required_location": "Jakarta (Remote)",
+      "salary": "Rp 5.500.000",
+      "tags": ["React", "TypeScript", "PostgreSQL", "Express", "Prisma"]
+    },
+    {
+      "id": 1003,
+      "title": "Software Engineer Intern - Web Platform",
+      "company_name": "Bintang Commerce",
+      "category": "Software Development",
+      "candidate_required_location": "Indonesia (Remote)",
+      "salary": "Rp 6.000.000",
+      "tags": ["React", "TypeScript", "CSS", "Git", "Testing"]
+    },
+    {
+      "id": 1004,
+      "title": "DevOps & Cloud Infrastructure Intern",
+      "company_name": "AwanMerdeka Cloud",
+      "category": "DevOps",
+      "candidate_required_location": "Jakarta (Remote)",
+      "salary": "Rp 5.200.000",
+      "tags": ["Git", "PostgreSQL", "Linux", "Docker", "CI/CD"]
+    },
+    {
+      "id": 1005,
+      "title": "Backend Developer Intern",
+      "company_name": "EduSpark Indonesia",
+      "category": "Backend",
+      "candidate_required_location": "Bandung (Onsite)",
+      "salary": "Rp 4.000.000",
+      "tags": ["Node.js", "Express", "MySQL", "Docker"]
+    },
+    {
+      "id": 1006,
+      "title": "Mobile Developer Intern (Flutter)",
+      "company_name": "Rantai Logistik",
+      "category": "Mobile",
+      "candidate_required_location": "Surabaya (Onsite)",
+      "salary": "Rp 3.800.000",
+      "tags": ["Flutter", "Dart", "Firebase", "Git"]
+    },
+    {
+      "id": 1007,
+      "title": "Data Analyst Intern",
+      "company_name": "Sawit Data Nusantara",
+      "category": "Data",
+      "candidate_required_location": "Jakarta (Hybrid)",
+      "salary": "Rp 4.200.000",
+      "tags": ["SQL", "Python", "Excel", "Tableau"]
+    },
+    {
+      "id": 1008,
+      "title": "Machine Learning Engineer Intern",
+      "company_name": "Kecerdasan Merah Putih",
+      "category": "Data",
+      "candidate_required_location": "Yogyakarta (Remote)",
+      "salary": "Rp 5.000.000",
+      "tags": ["Python", "TensorFlow", "Pandas", "Git"]
+    },
+    {
+      "id": 1009,
+      "title": "UI/UX Engineer Intern",
+      "company_name": "Pena Kreatif Studio",
+      "category": "Design",
+      "candidate_required_location": "Bali (Remote)",
+      "salary": "Rp 3.500.000",
+      "tags": ["Figma", "CSS", "HTML", "React"]
+    },
+    {
+      "id": 1010,
+      "title": "QA Automation Intern",
+      "company_name": "Garuda FinTech",
+      "category": "Software Development",
+      "candidate_required_location": "Jakarta (Hybrid)",
+      "salary": "Rp 4.300.000",
+      "tags": ["Testing", "TypeScript", "Playwright", "Git"]
+    },
+    {
+      "id": 1011,
+      "title": "Cloud Security Intern",
+      "company_name": "Benteng Siber",
+      "category": "DevOps",
+      "candidate_required_location": "Jakarta (Onsite)",
+      "salary": "Rp 5.800.000",
+      "tags": ["Linux", "Networking", "AWS", "Docker"]
+    },
+    {
+      "id": 1012,
+      "title": "Backend Engineer Intern (Golang)",
+      "company_name": "Ojekin",
+      "category": "Backend",
+      "candidate_required_location": "Jakarta (Hybrid)",
+      "salary": "Rp 6.500.000",
+      "tags": ["Go", "PostgreSQL", "Docker", "REST API"]
+    },
+    {
+      "id": 1013,
+      "title": "Web Developer Intern",
+      "company_name": "Pasar Digital Jatim",
+      "category": "Software Development",
+      "candidate_required_location": "Surabaya (Hybrid)",
+      "salary": "Rp 3.500.000",
+      "tags": ["HTML", "CSS", "JavaScript", "PHP"]
+    },
+    {
+      "id": 1014,
+      "title": "IT Support & Network Intern",
+      "company_name": "Telekomunika Nusa",
+      "category": "IT Support",
+      "candidate_required_location": "Malang (Onsite)",
+      "salary": "Rp 3.000.000",
+      "tags": ["Networking", "Linux", "Windows Server"]
+    },
+    {
+      "id": 1015,
+      "title": "Frontend Developer Intern (Vue)",
+      "company_name": "Kopi Kode",
+      "category": "Software Development",
+      "candidate_required_location": "Semarang (Remote)",
+      "salary": "Rp 4.000.000",
+      "tags": ["Vue", "JavaScript", "CSS", "Git"]
+    }
+  ]
+}
