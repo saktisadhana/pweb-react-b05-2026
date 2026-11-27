@@ -4,6 +4,7 @@
 import profileIcon from '../assets/profile.svg';
 import oxIcon from '../assets/ox.svg';
 import textIcon from '../assets/text.svg';
+import searchIcon from '../assets/search.svg';
 
 export type Page = 'explore' | 'warroom' | 'detail' | 'offer' | 'profil' | 'agenda';
 
@@ -16,7 +17,8 @@ export type TileAction =
   | { type: 'back' }
   | { type: 'notif' }
   | { type: 'listPage'; index: number }
-  | { type: 'pageStep'; delta: -1 | 1 };
+  | { type: 'pageStep'; delta: -1 | 1 }
+  | { type: 'toggleMenu' };
 
 export interface TileIcon {
   src: string;
@@ -83,6 +85,7 @@ const ICONS = {
   profile: { src: profileIcon, w: 38.7, h: 50, dx: 31, dy: 25 },
   ox: { src: oxIcon, w: 53.3, h: 52, dx: 23, dy: 24 },
   text: { src: textIcon, w: 64.7, h: 31.3, dx: 18, dy: 35 },
+  search: { src: searchIcon, w: 47.5, h: 47.5, dx: 26, dy: 26 },
 } satisfies Record<string, TileIcon>;
 
 // Baris paling atas + baris logo, sama di semua halaman.
@@ -111,9 +114,11 @@ const NAV: Row[] = [
   // Di Figma tile ini hanya hiasan kuning. Dipakai sebagai menu Eksplorasi supaya halaman itu
   // bisa dibuka langsung dari menu (sebelumnya hanya lewat logo SENO, dan user tidak tahu).
   [250, 374, 205, 100, 'B', { ...lab('> Cari', 18, 21), name: 'Eksplorasi: cari lowongan', action: { type: 'nav', page: 'explore' }, currentOn: ['explore'] }],
+  [460, 374, 100, 100, 'B', { icon: ICONS.search, name: 'Eksplorasi (ikon)', action: { type: 'nav', page: 'explore' }, currentOn: ['explore'] }],
 ];
 
-const ARROWS: Row = [355, 1004, 205, 100, 'B', { ...lab('<<<<', 33, 21), action: { type: 'back' } }];
+// "<<<<" melipat menu kiri (War Room, Compare-Offer, Cari). Saat terlipat tulisannya jadi ">>>>".
+const ARROWS: Row = [355, 1004, 205, 100, 'B', { ...lab('<<<<', 33, 21), name: 'Lipat menu', action: { type: 'toggleMenu' } }];
 
 // Frame War Room, Detail, Offer, Profil, Agenda memakai peta yang sama.
 const SHARED: Row[] = [
@@ -178,10 +183,15 @@ const EXPLORE: Row[] = [
 const build = (rows: Row[]): TileDef[] =>
   rows.map(([x, y, w, h, color, extra]) => ({ id: `${x}:${y}:${w}:${h}`, x, y, w, h, color, ...extra }));
 
-export function getTiles(page: Page): TileDef[] {
-  if (page === 'explore') return build([...HEADER, ...NAV, ...EXPLORE]);
-  if (page === 'offer') return build([...HEADER, ...NAV, ...SHARED, SUMBER_DATA]);
-  return build([...HEADER, ...NAV, ...SHARED]);
+export function getTiles(page: Page, menuOpen = true): TileDef[] {
+  const nav = menuOpen ? NAV : [];
+  const rows =
+    page === 'explore' ? [...HEADER, ...nav, ...EXPLORE]
+    : page === 'offer' ? [...HEADER, ...nav, ...SHARED, SUMBER_DATA]
+    : [...HEADER, ...nav, ...SHARED];
+  return build(rows).map((t) =>
+    t.action?.type === 'toggleMenu' && !menuOpen && t.label ? { ...t, name: 'Buka menu', label: { ...t.label, text: '>>>>' } } : t,
+  );
 }
 
 // Isi area kosong (tidak ada konten dan tidak ada tile) dengan tile biru/kuning.

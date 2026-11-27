@@ -23,7 +23,7 @@ export function TileButton({ tile, isCurrent, shown, pressed, badge, onPress, on
       className={`t-hit${tile.solid ? ' t-hit--solid' : ''}${pressed ? ' is-pressed' : ''}`}
       data-show={shown}
       style={{ left: tile.x, top: tile.y, width: tile.w, height: tile.h, '--d': `${enterDelay(tile)}ms` } as CSSProperties}
-      aria-label={tileName(tile)}
+      aria-label={badge ? `${tileName(tile)} (${badge})` : tileName(tile)}
       aria-current={isCurrent ? 'page' : undefined}
       onPointerDown={() => setPressed(true)}
       onPointerUp={() => setPressed(false)}
@@ -37,7 +37,7 @@ export function TileButton({ tile, isCurrent, shown, pressed, badge, onPress, on
       onClick={() => onAction(tile)}
     >
       {tile.icon && <TileIcon tile={tile} />}
-      {badge ? <span className="t__badge">{badge}</span> : null}
+      {badge ? <span className="t__badge" data-count={badge} aria-hidden="true" /> : null}
     </button>
   );
 }
@@ -76,6 +76,7 @@ function tileName(tile: TileDef): string {
   if (tile.name) return tile.name;
   if (a.type === 'back') return 'Kembali';
   if (a.type === 'notif') return 'Notifikasi';
+  if (a.type === 'toggleMenu') return 'Lipat menu';
   if (a.type === 'listPage') return `Halaman ${a.index + 1}`;
   if (a.type === 'pageStep') return a.delta < 0 ? 'Halaman sebelumnya' : 'Halaman berikutnya';
   if (tile.label) return tile.label.text.replace(/[>/<-]/g, '').trim();

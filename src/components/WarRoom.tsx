@@ -34,7 +34,7 @@ export function WarRoom({
   const [onlyGhosting, setOnlyGhosting] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
 
-  // ===== Derived state: semua di bawah dihitung ulang setiap render =====
+  // Derived state: semua di bawah dihitung ulang setiap render.
 
   const search = keyword.trim().toLowerCase();
 

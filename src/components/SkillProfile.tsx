@@ -3,6 +3,7 @@ import { addCaptainSkill, removeCaptainSkill } from '../utils/application';
 import { GridTile } from './seno/GridTile';
 import { TileBtn, TileInput, TileLabel } from './seno/OverlayTile';
 import { gridBox } from './seno/grid';
+import { PopularSkills } from './seno/PopularSkills';
 
 interface SkillProfileProps {
   skills: string[];
@@ -21,6 +22,15 @@ export function SkillProfile({ skills, onChange }: SkillProfileProps) {
       // addCaptainSkill (buatan Al) menolak skill kosong & duplikat dengan throw Error
       onChange(addCaptainSkill(skills, newSkill));
       setNewSkill('');
+      setError('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menambah skill');
+    }
+  }
+
+  function quickAdd(skill: string) {
+    try {
+      onChange(addCaptainSkill(skills, skill));
       setError('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menambah skill');
@@ -50,6 +60,7 @@ export function SkillProfile({ skills, onChange }: SkillProfileProps) {
       </TileBtn>
 
       <GridTile c={1} r={6} w={5} h={2} className={`gt--top${error ? ' is-error' : ''}`} label="Daftar skill Kapten">
+        <div className="scroll-inner">
         <div className="chips">
           {skills.map((skill) => (
             <span key={skill} className="chip" style={{ cursor: 'default' }}>
@@ -60,7 +71,9 @@ export function SkillProfile({ skills, onChange }: SkillProfileProps) {
             </span>
           ))}
         </div>
-        {skills.length === 0 && <p className="s muted">Belum ada skill. Ketik di kolom Add Skills lalu tekan +.</p>}
+        {skills.length === 0 && <p className="s muted">Belum ada skill. Ketik di kolom Add Skills lalu tekan +, atau pilih dari skill populer di bawah.</p>}
+        <PopularSkills owned={skills} onPick={quickAdd} />
+        </div>
         {error && (
           <p className="err" role="alert" style={{ marginTop: 'auto' }}>
             {error}

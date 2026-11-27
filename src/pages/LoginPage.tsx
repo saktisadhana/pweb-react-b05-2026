@@ -102,7 +102,8 @@ export function LoginPage({ onLogin, onRegister, onGuest }: LoginPageProps) {
   const detail = error ?? (mode === 'login' ? null : `Username 3-20 karakter, password minimal ${MIN_PASSWORD} karakter.`);
 
   return (
-    <div className={`login${fit.narrow ? ' is-narrow' : ''}`} style={{ height: fit.height }}>
+    <main className={`login${fit.narrow ? ' is-narrow' : ''}`} style={{ height: fit.height }}>
+      <h1 className="sr-only">Seno Magang Portal, {mode === 'login' ? 'login' : 'daftar akun'}</h1>
       <div
         className="login__frame"
         style={{ transform: `translate(${fit.x}px, ${fit.y}px) scale(${fit.scale})`, width: FRAME_W, height: FRAME_H }}
@@ -113,7 +114,7 @@ export function LoginPage({ onLogin, onRegister, onGuest }: LoginPageProps) {
         </div>
 
         <form onSubmit={submit} noValidate aria-label={mode === 'login' ? 'Masuk' : 'Daftar akun baru'}>
-          <TileBtn box={T.submit} tone="amber" label={mode === 'login' ? 'Masuk' : 'Daftar'} type="submit" disabled={busy}>
+          <TileBtn box={T.submit} tone="amber" label={mode === 'login' ? 'Login' : 'Daftar'} type="submit" disabled={busy}>
             <span className="lbl lbl--on-amber" style={{ left: 45, top: 23 }}>
               {mode === 'login' ? '> Login' : '> Daftar'}
             </span>
@@ -135,7 +136,7 @@ export function LoginPage({ onLogin, onRegister, onGuest }: LoginPageProps) {
           </label>
 
           <TileBtn box={T.eye} tone="amber" label={showPassword ? 'Sembunyikan password' : 'Lihat password'} pressed={showPassword} onClick={() => setShowPassword((v) => !v)}>
-            <span className="lt__icon lbl--on-amber">&lt;o&gt;</span>
+            <span className="lt__icon lbl--on-amber" data-glyph="<o>" aria-hidden="true" />
           </TileBtn>
 
           <label className={`lt lt--amber lt--input${error ? ' is-error' : ''}`} style={boxStyle(T.password)}>
@@ -161,10 +162,10 @@ export function LoginPage({ onLogin, onRegister, onGuest }: LoginPageProps) {
               usernameRef.current?.focus();
             }}
           >
-            <span className="lt__icon lbl--on-navy">-</span>
+            <span className="lt__icon lbl--on-navy" data-glyph="-" aria-hidden="true" />
           </TileBtn>
 
-          <TileBtn box={T.mode} tone="navy" label={mode === 'login' ? 'Buat akun baru' : 'Kembali ke login'} onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}>
+          <TileBtn box={T.mode} tone="navy" label={mode === 'login' ? 'Daftar akun baru' : 'Login dengan akun lama'} onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}>
             <span className="lbl lbl--on-navy lbl--small" style={{ left: 22, top: 30 }}>
               {mode === 'login' ? '> Daftar' : '> Login'}
             </span>
@@ -183,6 +184,6 @@ export function LoginPage({ onLogin, onRegister, onGuest }: LoginPageProps) {
           </span>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { GridButton, GridTile } from '../components/seno/GridTile';
 import { InterviewTimer } from '../components/seno/InterviewTimer';
+import { Select } from '../components/seno/Select';
+import { buildInterviewQuestions } from '../data/interviewQuestions';
 import { WORK_MODES, type Application, type ApplicationStatus, type WorkMode } from '../types/application';
 import {
   addApplicationNote,
@@ -17,6 +19,7 @@ import { formatRupiah } from '../utils/offerScore';
 
 interface DetailPageProps {
   app: Application | undefined;
+  kaptenSkills?: string[]; // untuk soal tentang skill yang belum dikuasai
   onUpdate: (next: Application) => void;
   onDelete: (id: string) => void;
   onSimulateGhosting: (id: string) => void;
@@ -26,7 +29,7 @@ interface DetailPageProps {
 const STAGES: ApplicationStatus[] = ['WISHLIST', 'APPLIED', 'SCREENING', 'INTERVIEW', 'OFFER'];
 const title = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
 
-export function DetailPage({ app, onUpdate, onDelete, onSimulateGhosting, onBack }: DetailPageProps) {
+export function DetailPage({ app, kaptenSkills = [], onUpdate, onDelete, onSimulateGhosting, onBack }: DetailPageProps) {
   if (!app) {
     return (
       <GridTile c={6} r={1} w={8} h={2} label="Lamaran tidak ditemukan">
@@ -38,10 +41,10 @@ export function DetailPage({ app, onUpdate, onDelete, onSimulateGhosting, onBack
     );
   }
   // key: state form di-reset kalau pindah ke lamaran lain.
-  return <Detail key={app.id} app={app} onUpdate={onUpdate} onDelete={onDelete} onSimulateGhosting={onSimulateGhosting} />;
+  return <Detail key={app.id} app={app} kaptenSkills={kaptenSkills} onUpdate={onUpdate} onDelete={onDelete} onSimulateGhosting={onSimulateGhosting} />;
 }
 
-function Detail({ app, onUpdate, onDelete, onSimulateGhosting }: Omit<DetailPageProps, 'app' | 'onBack'> & { app: Application }) {
+function Detail({ app, kaptenSkills = [], onUpdate, onDelete, onSimulateGhosting }: Omit<DetailPageProps, 'app' | 'onBack'> & { app: Application }) {
   const allowed = getAllowedTransitions(app.status);
   const [target, setTarget] = useState<ApplicationStatus | null>(allowed[0] ?? null);
   const [salary, setSalary] = useState(app.salaryOffer ? String(app.salaryOffer) : '');
@@ -154,11 +157,7 @@ function Detail({ app, onUpdate, onDelete, onSimulateGhosting }: Omit<DetailPage
           </GridTile>
           <GridTile c={12} r={3} className="tight" label="Mode kerja">
             <span className="k">&gt;/ Mode</span>
-            <span className="select-wrap">
-              <select value={mode} onChange={(e) => setMode(e.target.value as WorkMode)}>
-                {WORK_MODES.map((m) => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </span>
+            <Select<WorkMode> ariaLabel="Mode kerja" className="dot" value={mode} onChange={setMode} options={WORK_MODES.map((m) => ({ value: m, label: m }))} />
           </GridTile>
         </>
       )}
@@ -253,7 +252,8 @@ function Detail({ app, onUpdate, onDelete, onSimulateGhosting }: Omit<DetailPage
       </GridTile>
 
       {prepOpen ? (
-        <InterviewTimer onClose={() => setPrepOpen(false)} />
+        // Soal disesuaikan dengan posisi & skill yang diminta lowongan ini.
+        <InterviewTimer questions={buildInterviewQuestions(app, kaptenSkills)} onClose={() => setPrepOpen(false)} />
       ) : (
         <GridButton c={10} r={4} w={4} className="gt--center" onClick={() => setPrepOpen(true)}>
           <span className="h2 chev">Buka latihan interview</span>

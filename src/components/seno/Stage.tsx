@@ -14,13 +14,14 @@ interface StageProps {
   onLogo: () => void;
   overlay?: ReactNode; // popup / toast, ikut di dalam stage
   paused?: boolean; // true saat popup terbuka: efek mouse dimatikan (latar sedang di-blur)
+  menuOpen?: boolean;
   children: ReactNode;
 }
 
 
 // Stage = frame Figma 1440 x 1238. Semua tile dan konten diletakkan dengan
 // koordinat px Figma, lalu seluruh stage di-scale mengikuti lebar layar.
-export function Stage({ page, pager, notifCount, onTileAction, onLogo, overlay, paused = false, children }: StageProps) {
+export function Stage({ page, pager, notifCount, onTileAction, onLogo, overlay, paused = false, menuOpen = true, children }: StageProps) {
   const contentRef = useRef<HTMLElement>(null);
   const [blocked, setBlocked] = useState<string | undefined>(undefined);
   const [scale, setScale] = useState(1);
@@ -109,6 +110,7 @@ export function Stage({ page, pager, notifCount, onTileAction, onLogo, overlay, 
           effects={!flow && !paused && !prefersReducedMotion()}
           onAction={onTileAction}
           onLogo={onLogo}
+          menuOpen={menuOpen}
         />
         {/* key={page}: konten dipasang ulang saat pindah halaman, jadi animasi masuk diputar lagi. */}
         <main className="content" key={page} ref={contentRef}>

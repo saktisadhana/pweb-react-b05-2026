@@ -1,10 +1,14 @@
 import { useRef, useState } from 'react';
 import { GridButton, GridTile } from '../components/seno/GridTile';
 import { addCaptainSkill, removeCaptainSkill } from '../utils/application';
+import { PopularSkills } from '../components/seno/PopularSkills';
 import type { Application } from '../types/application';
 import type { User } from '../utils/auth';
 
 import type { JobSource } from '../services/jobService';
+import { SHORTCUTS } from '../data/shortcuts';
+import { KeyCaps } from '../components/seno/Popups';
+
 const MIN_SKILLS = 3;
 
 interface ProfilPageProps {
@@ -19,6 +23,7 @@ interface ProfilPageProps {
   applications: Application[];
   onImport: (apps: Application[], skills: string[]) => void;
   onReset: () => void;
+  onShowShortcuts: () => void;
 }
 
 // Bonus: halaman profil Kapten (skill, mode gelap, backup data). Layout dari frame "Profil" di Figma.
@@ -29,10 +34,11 @@ export function ProfilPage(p: ProfilPageProps) {
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const add = () => {
+  // value: dari tombol skill populer; kalau kosong pakai isi kolom input.
+  const add = (value?: string) => {
     try {
-      p.setKaptenSkills(addCaptainSkill(p.kaptenSkills, skill));
-      setSkill('');
+      p.setKaptenSkills(addCaptainSkill(p.kaptenSkills, value ?? skill));
+      if (value === undefined) setSkill('');
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -53,7 +59,7 @@ export function ProfilPage(p: ProfilPageProps) {
     const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'aku-mw-magang-backup.json';
+    link.download = 'seno-magang-portal-backup.json';
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -91,9 +97,21 @@ export function ProfilPage(p: ProfilPageProps) {
         <button type="button" role="switch" className="switch" aria-checked={p.theme === 'dark'} aria-label="Mode gelap" onClick={p.onToggleTheme} />
       </GridTile>
 
-      <GridTile c={10} r={2} w={4} label="Shortcut keyboard">
-        <span className="s">/ Shortcut keyboard</span>
-        <span className="xs"><kbd className="chip" style={{ padding: '2px 7px', marginRight: 8 }}>/</kbd>fokus ke kolom pencarian War Room</span>
+      <GridButton c={10} r={2} w={4} className="gt--row" onClick={p.onShowShortcuts}>
+        <span className="s chev">Lihat shortcut keyboard</span>
+        <span className="kbd">?</span>
+      </GridButton>
+
+      <GridTile c={1} r={6} w={5} h={3} className="gt--top" label="Shortcut keyboard">
+        <span className="k">&gt;/ Shortcut keyboard</span>
+        <div className="scroll-inner" tabIndex={0} aria-label="Daftar shortcut keyboard">
+          {SHORTCUTS.map((s) => (
+            <span key={s.label} className="sc-row xs">
+              <KeyCaps keys={s.keys} />
+              {s.label}
+            </span>
+          ))}
+        </div>
       </GridTile>
 
       <GridTile c={6} r={3} w={8} label="Profil skill">
@@ -112,7 +130,7 @@ export function ProfilPage(p: ProfilPageProps) {
         {error && <span className="err" role="alert">{error}</span>}
       </GridTile>
 
-      <GridButton c={10} r={4} className="gt--center gt--navy" onClick={add}>
+      <GridButton c={10} r={4} className="gt--center gt--navy" onClick={() => add()}>
         <span className="xs chev">Tambah</span>
       </GridButton>
 
@@ -122,6 +140,7 @@ export function ProfilPage(p: ProfilPageProps) {
       </GridTile>
 
       <GridTile c={6} r={5} w={8} h={2} className="gt--top" label="Daftar skill">
+        <div className="scroll-inner">
         <div className="chips">
           {p.kaptenSkills.length === 0 && <span className="s muted">Belum ada skill. Tambahkan skill yang kamu kuasai untuk menghitung Match Score.</span>}
           {p.kaptenSkills.map((s) => (
@@ -131,6 +150,8 @@ export function ProfilPage(p: ProfilPageProps) {
             </span>
           ))}
         </div>
+        <PopularSkills owned={p.kaptenSkills} onPick={(s) => add(s)} />
+        </div>
       </GridTile>
 
       <GridTile c={6} r={7} w={8} label="Backup data">
@@ -139,7 +160,7 @@ export function ProfilPage(p: ProfilPageProps) {
 
       <GridButton c={6} r={8} w={3} className="gt--center" onClick={exportJson}>
         <span className="h3 chev">Export JSON</span>
-        <span className="xs">aku-mw-magang-backup.json</span>
+        <span className="xs">seno-magang-portal-backup.json</span>
       </GridButton>
 
       <GridButton c={9} r={8} w={3} className="gt--center" onClick={() => fileRef.current?.click()}>

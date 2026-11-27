@@ -6,11 +6,11 @@
   --amber: #fdbb16;
   --paper: #f1f8fc;
   --ink: #233f7c;
-  --ink-soft: rgba(35, 63, 124, 0.62);
+  --ink-soft: rgba(35, 63, 124, 0.76); /* 5:1 di atas tile putih (WCAG AA untuk teks kecil) */
   --track: #e3e8f2;
   --green: #22a65a;
   --red: #d33a3a;
-  --amber-text: #c98700; /* kuning yang masih terbaca di atas putih (badge match 40-69%) */
+  --amber-text: #946500; /* kuning tua untuk teks di atas putih (badge match 40-69%), 5:1 */
   --card: rgba(255, 255, 255, 0.95);
   --card-shadow: 0 4px 24px rgba(35, 63, 124, 0.16);
   --hot-glow: 0 0 40px rgba(253, 187, 22, 0.65);
@@ -23,7 +23,8 @@
 [data-theme='dark'] {
   --paper: #0e1830;
   --ink: #eaf1fa;
-  --ink-soft: rgba(234, 241, 250, 0.62);
+  --ink-soft: rgba(234, 241, 250, 0.72);
+  --amber-text: var(--amber);
   --track: rgba(234, 241, 250, 0.16);
   --card: rgba(22, 36, 72, 0.94);
   --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
@@ -47,7 +48,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 :focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 
-/* ---------- Stage ---------- */
+/* Bawaan browser ikut palet: seleksi teks, kursor ketik, scrollbar, checkbox. */
+::selection { background: var(--amber); color: #233f7c; }
+input, textarea { caret-color: var(--amber-text); }
+html { scrollbar-color: rgba(35, 63, 124, 0.35) transparent; accent-color: var(--navy); }
+html[data-theme='dark'] { scrollbar-color: rgba(234, 241, 250, 0.3) transparent; accent-color: var(--amber); }
+
+/* Stage */
 
 .stage-wrap { position: relative; width: 100%; overflow: clip; }
 
@@ -66,7 +73,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .field { position: absolute; inset: 0; }
 
-/* ---------- Overlay Figma: fade atas & bawah, vignette, glare ---------- */
+/* Overlay Figma: fade atas & bawah, vignette, glare */
 
 .fx i { position: absolute; pointer-events: none; }
 .fx__fade {
@@ -88,7 +95,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 [data-theme='dark'] .fx__glare { opacity: 0.08; }
 [data-theme='dark'] .fx__vignette { background: radial-gradient(ellipse at center, rgba(14, 24, 48, 0), rgba(14, 24, 48, 0.7)); }
 
-/* ---------- Tile background ---------- */
+/* Tile background */
 
 /* Warna tile digambar TileCanvas. Elemen di bawah ini hanya tombol transparen di atasnya. */
 .tiles-canvas { position: absolute; left: 0; top: 0; width: 1440px; height: 1238px; pointer-events: none; }
@@ -137,6 +144,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .t__icon { position: absolute; pointer-events: none; user-select: none; transition: transform 0.3s var(--ease); }
 .t-hit:hover .t__icon { transform: scale(1.06); }
 
+/* Angka badge dan simbol ikon digambar lewat CSS, jadi nama tombol untuk pembaca layar
+   cukup dari aria-label (tidak bentrok dengan teks yang terlihat). */
+.t__badge::before { content: attr(data-count); }
+.lt__icon[data-glyph]::before { content: attr(data-glyph); }
 .t__badge {
   position: absolute;
   top: 10px;
@@ -180,7 +191,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .lbl--on-navy { -webkit-text-stroke-color: var(--amber); text-shadow: 0 0 10px rgba(253, 187, 22, 0.35); }
 .lbl--on-amber { -webkit-text-stroke-color: var(--navy); text-shadow: 0 0 10px rgba(35, 63, 124, 0.25); }
 
-/* ---------- Konten (tile putih) ---------- */
+/* Konten (tile putih) */
 
 .contents { display: contents; }
 
@@ -220,14 +231,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .gt--row { flex-direction: row; align-items: center; justify-content: space-between; }
 .gt--center { align-items: center; text-align: center; padding: 12px 10px; }
 .gt.tight { padding: 14px 12px; }
-.tight .select-wrap select, .tight .field-input { font-size: 14px; }
+.tight .sel__btn, .tight .field-input { font-size: 14px; }
 .gt--quiet { background: rgba(255, 255, 255, 0.55); box-shadow: none; }
 [data-theme='dark'] .gt--quiet { background: rgba(22, 36, 72, 0.5); }
 
 .gt--btn { cursor: pointer; }
 .gt--btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--card-shadow), 0 0 26px rgba(253, 187, 22, 0.5); }
 .gt--btn:active:not(:disabled) { transform: scale(0.97); box-shadow: var(--card-shadow), 0 0 46px rgba(253, 187, 22, 0.95); background: #fff7dd; }
-.gt--btn:disabled { cursor: default; opacity: 0.55; }
+.gt--btn:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .gt--navy { background: var(--navy); color: #fff; }
 .gt--navy:active:not(:disabled) { background: var(--amber); color: var(--navy); }
@@ -236,7 +247,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* Sel di dalam daftar (posisi ikut grid CSS, bukan absolute). */
 .gt.cell { position: relative; left: auto; top: auto; width: auto; height: 100px; }
 
-/* ---------- Tipografi ---------- */
+/* Tipografi */
 
 .dot { font-family: var(--f-dot); font-weight: 700; }
 .h1 { font: 700 22px/1.25 var(--f-dot); margin: 0; }
@@ -254,9 +265,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .gt p { margin: 0; }
 .chev::before { content: '> '; color: var(--amber); }
 .gt--navy .chev::before { color: var(--amber); }
+.gt--navy .muted { color: rgba(255, 255, 255, 0.8); }
 .spread { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 
-/* ---------- Kontrol ---------- */
+/* Kontrol */
 
 .field-input {
   width: 100%;
@@ -268,19 +280,58 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .field-input::placeholder { color: var(--ink-soft); }
 
-.select-wrap { position: relative; }
-.select-wrap select {
+/* Dropdown (Select.tsx): tombol di dalam tile, daftar pilihannya kartu SENO dengan font dot. */
+.sel { display: block; min-width: 0; }
+.sel__btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   width: 100%;
-  padding: 0 22px 0 0;
+  padding: 0;
   border: 0;
   background: none;
-  appearance: none;
-  outline: none;
-  cursor: pointer;
   font-size: 16px;
+  text-align: left;
+  cursor: pointer;
 }
-.select-wrap::after { content: 'v'; position: absolute; right: 0; top: 0; font-family: var(--f-dot); pointer-events: none; }
-.select-wrap option { color: #233f7c; }
+.sel__value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sel__chev { flex: none; font-family: var(--f-dot); transition: transform 0.2s var(--ease); }
+.sel__btn[aria-expanded='true'] .sel__chev { transform: rotate(180deg); }
+.sel__list {
+  position: absolute;
+  z-index: 30;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 36px rgba(35, 63, 124, 0.22), 0 0 0 1px rgba(35, 63, 124, 0.08);
+  color: var(--ink);
+  font: 700 15px/1.25 var(--f-dot);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(35, 63, 124, 0.3) transparent;
+  animation: sel-in 0.18s var(--ease);
+}
+[data-theme='dark'] .sel__list { background: #162448; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(234, 241, 250, 0.12); }
+@keyframes sel-in { from { opacity: 0; transform: translateY(-6px); } }
+.sel__opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.sel__opt::before { content: '>'; color: var(--amber); visibility: hidden; }
+.sel__opt.is-active { background: var(--cal-cell-hover); }
+.sel__opt[aria-selected='true'] { background: var(--ev-interview-bg); color: #fff; }
+.sel__opt[aria-selected='true']::before { visibility: visible; }
+.sel__opt[aria-selected='true'].is-active { box-shadow: inset 0 0 0 2px var(--amber); }
 
 .switch {
   position: relative;
@@ -338,6 +389,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .chip.is-on { background: var(--navy); color: #fff; }
 .chip.is-on::before { content: '>'; color: var(--amber); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Tombol cepat tambah skill populer: garis tipis supaya beda dari skill yang sudah dimiliki. */
+.chip--add { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(35, 63, 124, 0.35); cursor: pointer; }
+.chip--add:hover { background: var(--navy); color: #fff; box-shadow: none; }
 .x { padding: 0 2px; border: 0; background: none; cursor: pointer; font-family: var(--f-dot); }
 
 .check { display: flex; align-items: center; gap: 12px; padding: 6px 0; font-size: 14px; }
@@ -345,7 +399,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .check span { flex: 1; }
 .check.is-done span { color: var(--ink-soft); }
 
-/* ---------- War Room: daftar lamaran (5 per halaman) ---------- */
+/* War Room: daftar lamaran (5 per halaman) */
 
 .rows {
   position: absolute;
@@ -364,7 +418,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .row .gt { padding: 12px 12px; }
 .row .info { padding: 12px 16px; }
-.row .st { padding: 12px 10px; font-size: 11px; }
+.row .st { padding: 12px 10px; font-size: 12px; }
 .row .act { align-items: center; justify-content: center; font-size: 12.5px; text-align: center; }
 
 .empty-note { padding: 30px; text-align: center; }
@@ -391,7 +445,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .scroll-inner::-webkit-scrollbar-thumb { background: rgba(35, 63, 124, 0.35); border-radius: 3px; }
 .empty-note__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 16px; }
 
-/* ---------- Popup ---------- */
+/* Popup */
 
 .scrim {
   position: absolute;
@@ -412,13 +466,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(30px); } }
 @keyframes shrink { from { width: 100%; } to { width: 0; } }
 
-/* ---------- Timer ---------- */
+/* Timer */
 
 .clock { font: 700 60px/1 var(--f-dot); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .clock.is-done { color: var(--red); }
 .question { font: 700 18px/1.45 var(--f-dot); margin: 0; }
 
-/* ---------- Mode HP: tile jadi background, konten satu kolom ---------- */
+/* Mode HP: tile jadi background, konten satu kolom */
 
 .is-flow .stage {
   position: relative;
@@ -488,7 +542,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .is-flow .content .lt__input { padding-left: 20px; font-size: 30px; line-height: 84px; }
 .is-flow .popup, .is-flow .toast { left: 10px; right: 10px; width: auto; top: auto; bottom: 10px; height: auto; }
 
-/* ---------- Login (frame Figma 415:2) ---------- */
+/* Login (frame Figma 415:2) */
 
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
@@ -578,8 +632,169 @@ button.lt--navy[aria-pressed='true'] .lbl--on-navy { -webkit-text-stroke-color: 
 .lt__detail b { font-family: var(--f-dot); }
 .lt__link { position: static; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }
 
-/* ---------- Animasi ----------
-   Semua animasi hanya memakai transform / opacity (diproses GPU), jadi tidak ada
+/* Tombol teks biasa (judul tile yang bisa diklik). */
+.link-btn { display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; }
+.link-btn:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Tombol keyboard. */
+.kbds { display: inline-flex; flex: none; gap: 4px; min-width: 64px; }
+.kbd {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 26px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: #eef1f7;
+  box-shadow: inset 0 0 0 1px rgba(35, 63, 124, 0.22);
+  font: 700 12.5px/1.45 var(--f-dot);
+  font-variant-numeric: tabular-nums;
+}
+[data-theme='dark'] .kbd { background: rgba(234, 241, 250, 0.1); box-shadow: inset 0 0 0 1px rgba(234, 241, 250, 0.25); }
+.sc-row { display: flex; align-items: center; gap: 10px; }
+.sc-tile { justify-content: flex-start; gap: 14px; }
+.sc-tile .kbds { min-width: 76px; }
+
+/* Agenda: kalender bulan. Warna tiap jenis agenda dipakai di sel, legenda, dan daftar hari. */
+:root {
+  --cal-cell: #f2f5fa;
+  --cal-cell-hover: #e6ecf7;
+  --cal-weekend: #ebeff7;
+  --ev-interview-bg: var(--navy);
+  --ev-interview: #fff;
+  --ev-ghosting-bg: #fbe3e3;
+  --ev-ghosting: #9e2424;
+  --ev-applied-bg: #d9f1e2;
+  --ev-applied: #16633a;
+  --ev-wishlist-bg: #fcefc8;
+  --ev-wishlist: #6b4800;
+}
+[data-theme='dark'] {
+  --cal-cell: rgba(234, 241, 250, 0.06);
+  --cal-cell-hover: rgba(234, 241, 250, 0.12);
+  --cal-weekend: rgba(234, 241, 250, 0.03);
+  --ev-interview-bg: #3d66c4;
+  --ev-ghosting-bg: rgba(211, 58, 58, 0.3);
+  --ev-ghosting: #ffd6d6;
+  --ev-applied-bg: rgba(34, 166, 90, 0.3);
+  --ev-applied: #cff3dd;
+  --ev-wishlist-bg: rgba(253, 187, 22, 0.24);
+  --ev-wishlist: #ffe7a8;
+}
+
+.gt.cal-tile { padding: 14px; justify-content: stretch; background: #fff; }
+[data-theme='dark'] .gt.cal-tile { background: #162448; }
+.cal { display: grid; grid-template-rows: auto repeat(6, minmax(0, 1fr)); gap: 4px; height: 100%; min-height: 0; }
+.cal__head, .cal__week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; min-height: 0; }
+.cal__head span { padding: 0 8px 2px; font-size: 12.5px; color: var(--ink-soft); }
+.cal__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  min-height: 0;
+  padding: 5px;
+  border-radius: 6px;
+  background: var(--cal-cell);
+  cursor: pointer;
+  transition: background-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.cal__cell.is-weekend { background: var(--cal-weekend); }
+.cal__cell.is-out { background: transparent; }
+@media (hover: hover) {
+  .cal__cell:hover, .cal__cell.is-weekend:hover { background: var(--cal-cell-hover); }
+}
+.cal__cell.is-out .cal__num { color: var(--ink-soft); }
+.cal__cell.is-conflict { box-shadow: inset 0 0 0 2px var(--amber); }
+.cal__cell.is-selected { background: var(--card); box-shadow: inset 0 0 0 2px var(--ink); }
+.cal__cell.is-selected.is-conflict { box-shadow: inset 0 0 0 2px var(--ink), 0 0 18px rgba(253, 187, 22, 0.7); }
+.cal__num {
+  align-self: flex-start;
+  min-width: 28px;
+  height: 24px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  font: 700 14px/24px var(--f-dot);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  cursor: pointer;
+}
+.cal__cell.is-today .cal__num { background: var(--amber); color: #233f7c; }
+.cal__events {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(35, 63, 124, 0.3) transparent;
+}
+.cal__events::-webkit-scrollbar { width: 4px; }
+.cal__events::-webkit-scrollbar-thumb { background: rgba(35, 63, 124, 0.3); border-radius: 2px; }
+.cal-ev {
+  flex: none;
+  width: 100%;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.15s var(--ease);
+}
+.cal-ev:hover { filter: brightness(0.94); transform: translateX(1px); }
+.cal-ev--interview, .day-ev--interview .day-ev__tag { background: var(--ev-interview-bg); color: var(--ev-interview); }
+.cal-ev--ghosting, .day-ev--ghosting .day-ev__tag { background: var(--ev-ghosting-bg); color: var(--ev-ghosting); }
+.cal-ev--applied, .day-ev--applied .day-ev__tag { background: var(--ev-applied-bg); color: var(--ev-applied); }
+.cal-ev--wishlist, .day-ev--wishlist .day-ev__tag { background: var(--ev-wishlist-bg); color: var(--ev-wishlist); }
+
+.cal-keys { gap: 6px; }
+.cal-key { padding: 6px 9px; font-size: 13px; }
+.cal-key i { width: 10px; height: 10px; border-radius: 3px; }
+.cal-key--interview i { background: var(--ev-interview-bg); }
+.cal-key--ghosting i { background: var(--ev-ghosting); }
+.cal-key--applied i { background: var(--ev-applied); }
+.cal-key--wishlist i { background: var(--ev-wishlist); }
+.cal-key[aria-pressed='false'] { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(35, 63, 124, 0.3); text-decoration: line-through; }
+.cal-key[aria-pressed='false'] i { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
+
+.day-list { margin-top: 6px; }
+.day-list__next { margin-top: 6px; color: var(--ink-soft); }
+.day-ev {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--cal-cell);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.day-ev:hover { background: var(--cal-cell-hover); transform: translateX(2px); }
+.day-ev__tag { grid-row: span 2; padding: 3px 7px; border-radius: 4px; font: 700 13px/1.3 var(--f-dot); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.day-ev__name { font: 700 15px/1.25 var(--f-dot); }
+.day-ev__sub { font-size: 12.5px; color: var(--ink-soft); }
+
+.is-flow .cal-tile .cal { height: auto; }
+.is-flow .cal__week { min-height: 64px; }
+/* Di HP nama perusahaan tidak muat: tiap agenda jadi garis warna, detailnya di panel hari dipilih. */
+.is-flow .cal-ev { height: 6px; padding: 0; font-size: 0; }
+.is-flow .cal-ev--ghosting { background: var(--ev-ghosting); }
+.is-flow .cal-ev--applied { background: var(--ev-applied); }
+.is-flow .cal-ev--wishlist { background: var(--ev-wishlist); }
+
+/* Animasi. Semua animasi hanya memakai transform / opacity (diproses GPU), jadi tidak ada
    yang menggambar ulang canvas tile per frame. */
 :root { --pop: cubic-bezier(0.22, 1.5, 0.36, 1); }
 

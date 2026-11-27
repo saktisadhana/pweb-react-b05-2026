@@ -4,14 +4,46 @@ import type { Application } from '../../types/application';
 import { findInterviewConflicts } from '../../utils/interviewConflict';
 import { isAtRiskOfGhosting } from '../../utils/ghosting';
 import { formatShortDate } from '../../utils/format';
+import { SHORTCUTS } from '../../data/shortcuts';
 
 // Popup dibangun dari tile grid juga (sesuai frame popup di Figma), di atas lapisan blur.
+const FOCUSABLE = 'input, select, textarea, button:not(:disabled), [tabindex="0"]';
+
 export function Scrim({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Fokus masuk ke popup saat dibuka, Tab berputar di dalam popup, dan fokus kembali ke
+  // tombol pemicunya saat popup ditutup.
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = () => document.querySelector<HTMLElement>('[role="dialog"]');
+    const items = () => [...(dialog()?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])];
+    if (!dialog()?.contains(document.activeElement)) items()[0]?.focus({ preventScroll: true });
+
+    const onTab = (e: KeyboardEvent) => {
+      const list = items();
+      if (e.key !== 'Tab' || list.length === 0) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      const inside = dialog()?.contains(document.activeElement);
+      if (!inside || (e.shiftKey && document.activeElement === first)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus({ preventScroll: true });
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus({ preventScroll: true });
+      }
+    };
+    window.addEventListener('keydown', onTab);
+    return () => {
+      window.removeEventListener('keydown', onTab);
+      opener?.focus({ preventScroll: true });
+    };
+  }, []);
   return <div className="scrim" onClick={onClose} aria-hidden="true" />;
 }
 
@@ -62,6 +94,41 @@ export function NotifPopup({ applications, onOpenDetail, onClose }: NotifPopupPr
             <span className="h3">{n.title}</span>
             <span className="xs">{n.text}</span>
           </GridButton>
+        ))}
+      </div>
+    </>
+  );
+}
+
+export function KeyCaps({ keys }: { keys: string[] }) {
+  return (
+    <span className="kbds">
+      {keys.map((k) => (
+        <kbd key={k} className="kbd">{k}</kbd>
+      ))}
+    </span>
+  );
+}
+
+// Popup tombol "?": semua shortcut dalam dua kolom tile.
+export function ShortcutPopup({ onClose }: { onClose: () => void }) {
+  const half = Math.ceil(SHORTCUTS.length / 2);
+  return (
+    <>
+      <Scrim onClose={onClose} />
+      <div role="dialog" aria-modal="true" aria-label="Shortcut keyboard">
+        <GridTile c={6} r={1} w={7} className="popup" label="Shortcut keyboard">
+          <span className="h2">Shortcut keyboard</span>
+          <span className="xs muted">Tidak aktif saat sedang mengetik di kolom isian.</span>
+        </GridTile>
+        <GridButton c={13} r={1} className="popup gt--center" onClick={onClose} ariaLabel="Tutup">
+          <span className="s chev">Tutup</span>
+        </GridButton>
+        {SHORTCUTS.map((s, i) => (
+          <GridTile key={s.label} c={i < half ? 6 : 10} r={2 + (i % half)} w={4} className="popup gt--row sc-tile" label={s.label}>
+            <KeyCaps keys={s.keys} />
+            <span className="s">{s.label}</span>
+          </GridTile>
         ))}
       </div>
     </>

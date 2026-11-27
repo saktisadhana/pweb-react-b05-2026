@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties, type RefObject } from 'react';
 import { GridButton, GridTile } from '../components/seno/GridTile';
+import { Select } from '../components/seno/Select';
 import { ConflictTile } from '../components/seno/ConflictTile';
 import { APPLICATION_STATUSES, type Application, type ApplicationStatus } from '../types/application';
 import { computeDashboardStats } from '../utils/dashboardStats';
@@ -107,25 +108,24 @@ export function WarRoomPage({ applications, kaptenSkills, onOpenDetail, onDelete
 
       <GridTile c={9} r={2} w={2} label="Filter status">
         <span className="k">&gt;/ Status</span>
-        <span className="select-wrap">
-          <select value={status} onChange={(e) => filterChanged(setStatus)(e.target.value as ApplicationStatus | 'ALL')}>
-            <option value="ALL">Semua Status</option>
-            {APPLICATION_STATUSES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </span>
+        <Select<ApplicationStatus | 'ALL'>
+          ariaLabel="Filter status"
+          className="dot"
+          value={status}
+          onChange={filterChanged(setStatus)}
+          options={[{ value: 'ALL', label: 'Semua Status' }, ...APPLICATION_STATUSES.map((s) => ({ value: s, label: s }))]}
+        />
       </GridTile>
 
       <GridTile c={11} r={2} w={3} label="Urutkan">
         <span className="k">&gt;/ Urutkan</span>
-        <span className="select-wrap">
-          <select value={sort} onChange={(e) => filterChanged(setSort)(e.target.value as SortKey)} className="dot">
-            {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
-              <option key={k} value={k}>{SORT_LABEL[k]}</option>
-            ))}
-          </select>
-        </span>
+        <Select<SortKey>
+          ariaLabel="Urutkan lamaran"
+          className="dot"
+          value={sort}
+          onChange={filterChanged(setSort)}
+          options={(Object.keys(SORT_LABEL) as SortKey[]).map((k) => ({ value: k, label: SORT_LABEL[k] }))}
+        />
       </GridTile>
 
       <GridTile c={6} r={3} w={3} className="gt--row" label="Filter ghosting">

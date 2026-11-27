@@ -1,4 +1,4 @@
-# Aku Mw Magang
+# Seno Magang Portal
 
 Aplikasi web untuk Kapten mengelola lamaran magang dari eksplorasi lowongan sampai dapat offer.
 Praktikum Pemrograman Web Modul 5 (React 19 + TypeScript + Vite), tampilan "SENO" dari desain Figma.

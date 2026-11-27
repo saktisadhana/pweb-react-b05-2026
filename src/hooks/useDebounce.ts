@@ -5,7 +5,6 @@ export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
-    // Setiap kali value berubah, pasang timer baru
     const timer = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);

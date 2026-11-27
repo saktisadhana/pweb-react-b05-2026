@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Stage } from './components/seno/Stage';
-import { NotifPopup, UndoToast } from './components/seno/Popups';
+import { NotifPopup, ShortcutPopup, UndoToast } from './components/seno/Popups';
 import { ApplicationForm } from './components/ApplicationForm';
 import { WarRoomPage } from './pages/WarRoomPage';
 import { DetailPage } from './pages/DetailPage';
@@ -13,14 +13,18 @@ import { LoginPage } from './pages/LoginPage';
 import { useAuth } from './hooks/useAuth';
 import type { User } from './utils/auth';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import { MenuSummary } from './components/MenuSummary';
 import { useUndoDelete } from './hooks/useUndoDelete';
 import { ageApplicationForGhosting, isAtRiskOfGhosting } from './utils/ghosting';
 import { findInterviewConflicts } from './utils/interviewConflict';
 import { DEFAULT_SKILLS, SAMPLE_APPLICATIONS, SAMPLE_SKILLS } from './data/sampleApplications';
 import type { Application } from './types/application';
 import type { Page, TileDef } from './data/figmaTiles';
+import { PAGE_KEYS } from './data/shortcuts';
+import { toDateKey } from './utils/format';
+import { addMonths } from './utils/calendar';
 
-type Popup = 'add' | 'notif' | null;
+type Popup = 'add' | 'notif' | 'help' | null;
 
 type Theme = 'light' | 'dark';
 
@@ -60,11 +64,16 @@ function Workspace({ user, theme, setTheme, onLogout }: WorkspaceProps) {
   const [storedSource, setJobSource] = useLocalStorage<JobSource>(ns('jobSource'), 'remotive');
   const jobSource: JobSource = storedSource === 'fallback' ? 'fallback' : 'remotive';
   const [history, setHistory] = useState<Page[]>(['warroom']);
+  // Menu kiri bisa dilipat lewat tile "<<<<" (diingat per akun).
+  const [menuOpen, setMenuOpen] = useLocalStorage<boolean>(ns('menuOpen'), true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [popup, setPopup] = useState<Popup>(null);
   // Halaman daftar (pagination) disimpan per layar, misal War Room halaman 2, Eksplorasi halaman 3.
   const [listPages, setListPages] = useState<Partial<Record<Page, number>>>({});
   const [pageCount, setPageCount] = useState(1);
+  // Tanggal dipilih di Agenda. Tetap diingat saat pindah halaman lalu kembali.
+  const [todayKey] = useState(() => toDateKey(new Date()));
+  const [agendaDay, setAgendaDay] = useState(todayKey);
   const searchRef = useRef<HTMLInputElement>(null);
   const { pendingDeletion, deleteItem, undoDelete } = useUndoDelete(applications, setApplications);
 
@@ -109,21 +118,42 @@ function Workspace({ user, theme, setTheme, onLogout }: WorkspaceProps) {
       else if (action.type === 'back') back();
       else if (action.type === 'listPage') setListPage(action.index);
       else if (action.type === 'pageStep') setListPage(Math.min(pageCount - 1, listPage + action.delta));
+      else if (action.type === 'toggleMenu') setMenuOpen(!menuOpen);
       else setPopup((p) => (p === 'notif' ? null : 'notif'));
     },
-    [navigate, back, setListPage, pageCount, listPage],
+    [navigate, back, setListPage, pageCount, listPage, menuOpen, setMenuOpen],
   );
   const goExplore = useCallback(() => navigate('explore'), [navigate]);
 
-  // Shortcut "/" -> pindah ke War Room lalu fokus ke kolom cari.
+  // Daftar tombolnya ada di data/shortcuts.ts. Tidak aktif saat sedang mengetik, saat Ctrl/Alt/Cmd
+  // ditekan (supaya shortcut browser tetap jalan), dan saat popup terbuka (kecuali "?" untuk menutup).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const typing = e.target instanceof HTMLElement && e.target.closest('input, textarea, select');
-      if (e.key !== '/' || typing) return;
-      e.preventDefault();
-      navigate('warroom');
-      // Tunggu War Room selesai dirender, lalu fokus ke kolom cari lewat useRef.
-      requestAnimationFrame(() => requestAnimationFrame(() => searchRef.current?.focus()));
+      const typing = e.target instanceof HTMLElement && e.target.closest('input, textarea, select, [contenteditable="true"]');
+      if (typing || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+      const key = e.key.toLowerCase();
+      const toggle: Popup = key === '?' ? 'help' : key === 'i' ? 'notif' : null;
+      if (toggle && (popup === null || popup === toggle)) {
+        e.preventDefault();
+        setPopup(popup === toggle ? null : toggle);
+        return;
+      }
+      if (popup !== null) return;
+      const step = key === '[' ? -1 : key === ']' ? 1 : 0;
+      let handled = true;
+      if (PAGE_KEYS[key]) navigate(PAGE_KEYS[key]);
+      else if (key === 'n') setPopup('add');
+      else if (key === 'm') setMenuOpen(!menuOpen);
+      else if (key === 't') setTheme((t) => (t === 'light' ? 'dark' : 'light'));
+      else if (key === 'b') back();
+      else if (step !== 0 && hasPager) setListPage(Math.min(pageCount - 1, Math.max(0, listPage + step)));
+      else if (step !== 0 && page === 'agenda') setAgendaDay((d) => addMonths(d, step));
+      else if (key === '/') {
+        navigate('warroom');
+        // Tunggu War Room selesai dirender, lalu fokus ke kolom cari lewat useRef.
+        requestAnimationFrame(() => requestAnimationFrame(() => searchRef.current?.focus()));
+      } else handled = false;
+      if (handled) e.preventDefault();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -143,6 +173,8 @@ function Workspace({ user, theme, setTheme, onLogout }: WorkspaceProps) {
     );
   } else if (popup === 'notif') {
     overlay = <NotifPopup applications={applications} onOpenDetail={openDetail} onClose={() => setPopup(null)} />;
+  } else if (popup === 'help') {
+    overlay = <ShortcutPopup onClose={() => setPopup(null)} />;
   }
 
   return (
@@ -153,6 +185,7 @@ function Workspace({ user, theme, setTheme, onLogout }: WorkspaceProps) {
       onLogo={goExplore}
       pager={hasPager ? { count: pageCount, current: listPage } : undefined}
       paused={popup !== null}
+      menuOpen={menuOpen}
       overlay={
         <>
           {overlay}
@@ -182,6 +215,7 @@ function Workspace({ user, theme, setTheme, onLogout }: WorkspaceProps) {
       {page === 'detail' && (
         <DetailPage
           app={applications.find((a) => a.id === selectedId)}
+          kaptenSkills={kaptenSkills}
           onUpdate={updateApp}
           onDelete={remove}
           onSimulateGhosting={simulateGhosting}
@@ -189,7 +223,11 @@ function Workspace({ user, theme, setTheme, onLogout }: WorkspaceProps) {
         />
       )}
       {page === 'offer' && <OfferPage applications={applications} kaptenSkills={kaptenSkills} />}
-      {page === 'agenda' && <AgendaPage applications={applications} onOpenDetail={openDetail} />}
+      {page === 'agenda' && (
+        <AgendaPage applications={applications} onOpenDetail={openDetail} day={agendaDay} today={todayKey} onDayChange={setAgendaDay} />
+      )}
+      {/* Menu dilipat: area menu dipakai untuk ringkasan (semua halaman). */}
+      {!menuOpen && <MenuSummary applications={applications} onOpenDetail={openDetail} onNavigate={navigate} />}
       {page === 'explore' && (
         <ExplorePage
           kaptenSkills={kaptenSkills}
@@ -218,6 +256,7 @@ function Workspace({ user, theme, setTheme, onLogout }: WorkspaceProps) {
             setApplications(apps);
             setKaptenSkills(skills);
           }}
+          onShowShortcuts={() => setPopup('help')}
           onReset={() => {
             setApplications([]);
             setKaptenSkills(SAMPLE_SKILLS);

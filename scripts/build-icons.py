@@ -77,11 +77,26 @@ TEXT = (
     + blocks([20.2 + 2.4 * i for i in range(10)], [25.2, 27.6], 2.4)  # garis bawah
 )
 
+# Ikon kaca pembesar untuk menu "> Cari" (dibuat sendiri, gaya titik sama dengan ikon lain).
+SEARCH_ART = [
+    '..XXX....',
+    '.X...X...',
+    'X.....X..',
+    'X.....X..',
+    'X.....X..',
+    '.X...X...',
+    '..XXX.X..',
+    '.......X.',
+    '........X',
+]
+SEARCH = [(2.6 + 5.1 * c, 2.6 + 5.1 * r, 2.6) for r, row in enumerate(SEARCH_ART) for c, ch in enumerate(row) if ch == 'X']
+
 # Ukuran node di Figma dan kotak tampilnya (node + ruang untuk garis luar).
 ICONS = {
     'profile': (PROFILE, NAVY, (36.175, 47.679), (-1.25, -1.15, 38.7, 50)),
     'ox': (OX, AMBER, (51, 50), (-1.15, -1, 53.3, 52)),
     'text': (TEXT, AMBER, (62.6, 28.8), (-1.05, -1.25, 64.7, 31.3)),
+    'search': (SEARCH, AMBER, (45.1, 45.1), (-1.2, -1.2, 47.5, 47.5)),
 }
 
 

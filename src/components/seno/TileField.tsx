@@ -20,6 +20,7 @@ interface TileFieldProps {
   effects: boolean;
   onAction: (tile: TileDef) => void;
   onLogo: () => void;
+  menuOpen: boolean; // false: menu kiri dilipat lewat tile "<<<<"
 }
 
 const isCurrentOn = (tile: TileDef, page: Page, listPage: number) =>
@@ -40,6 +41,7 @@ export const TileField = memo(function TileField({
   effects,
   onAction,
   onLogo,
+  menuOpen,
 }: TileFieldProps) {
   const [pressedId, setPressedId] = useState<string | null>(null);
   const moveRef = useRef<HTMLDivElement>(null);
@@ -48,7 +50,7 @@ export const TileField = memo(function TileField({
   const pagerCount = pager && pager.count > 1 ? pager.count : 0;
   const pagerCurrent = pager?.current ?? 0;
   const tiles = useMemo(() => {
-    const base = pagerCount ? [...getTiles(page), ...getPagerTiles(pagerCount, pagerCurrent)] : getTiles(page);
+    const base = pagerCount ? [...getTiles(page, menuOpen), ...getPagerTiles(pagerCount, pagerCurrent)] : getTiles(page, menuOpen);
     if (blocked === undefined) return base;
     const rects: Rect[] = blocked
       .split(";")
@@ -58,7 +60,7 @@ export const TileField = memo(function TileField({
         return { x, y, w, h };
       });
     return [...base, ...getFillTiles(base, rects)];
-  }, [page, pagerCount, pagerCurrent, blocked]);
+  }, [page, menuOpen, pagerCount, pagerCurrent, blocked]);
 
   const visuals: TileVisual[] = useMemo(
     () =>

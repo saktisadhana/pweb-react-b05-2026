@@ -3,6 +3,8 @@ import type { Application, InitialApplicationStatus, WorkMode } from '../types/a
 import { createApplication, isDuplicateApplication } from '../utils/application';
 import { GridButton, GridTile } from './seno/GridTile';
 import { Scrim } from './seno/Popups';
+import { PopularSkills } from './seno/PopularSkills';
+import { Select } from './seno/Select';
 
 interface ApplicationFormProps {
   applications: Application[];
@@ -146,19 +148,30 @@ export function ApplicationForm({ applications, onAdd, onClose }: ApplicationFor
         </GridTile>
         <GridTile c={8} r={4} w={3} className="popup" label="Mode kerja">
           <label className="k" htmlFor="form-mode">&gt;/ Mode kerja</label>
-          <span className="select-wrap">
-            <select id="form-mode" value={workMode} onChange={(e) => setWorkMode(e.target.value as WorkMode)}>
-              <option value="Remote">Remote</option>
-              <option value="Hybrid">Hybrid</option>
-              <option value="Onsite">Onsite</option>
-            </select>
-          </span>
+          <Select<WorkMode>
+            id="form-mode"
+            className="dot"
+            value={workMode}
+            onChange={setWorkMode}
+            options={[
+              { value: 'Remote', label: 'Remote' },
+              { value: 'Hybrid', label: 'Hybrid' },
+              { value: 'Onsite', label: 'Onsite' },
+            ]}
+          />
         </GridTile>
 
         <GridTile c={5} r={5} w={6} className={`popup${errors.skills ? ' is-error' : ''}`} label="Required skills">
           <label className="k" htmlFor="form-skills">&gt;/ Required skills (pisahkan dengan koma)</label>
           <input id="form-skills" ref={skillsRef} className="field-input" value={skillsText} onChange={(e) => setSkillsText(e.target.value)} placeholder="React, TypeScript, CSS" />
           {err(errors.skills)}
+          {/* Klik skill populer untuk langsung menambahkannya ke daftar di atas. */}
+          <PopularSkills
+            owned={parseSkills(skillsText)}
+            limit={6}
+            title="Tambah cepat:"
+            onPick={(skill) => setSkillsText([...parseSkills(skillsText), skill].join(', '))}
+          />
         </GridTile>
 
         {/* Input kondisional: hanya muncul kalau status awal APPLIED */}

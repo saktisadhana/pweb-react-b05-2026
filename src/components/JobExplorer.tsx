@@ -5,6 +5,7 @@ import { fetchJobs, guessWorkMode, type JobSource } from '../services/jobService
 import { useDebounce } from '../hooks/useDebounce';
 import { createApplication, getSkillMatch, isDuplicateApplication } from '../utils/application';
 import { GridButton, GridTile } from './seno/GridTile';
+import { Select } from './seno/Select';
 import { TileBtn, TileInput, TileLabel } from './seno/OverlayTile';
 import { gridBox } from './seno/grid';
 import { CountUp } from './seno/CountUp';
@@ -37,14 +38,12 @@ const matchStyle = (score: number): CSSProperties => ({ color: getMatchColor(sco
 // Fitur 1 - Eksplorasi Lowongan (Marvel). Logika fetch, filter, dan sort dari
 // versi Marvel; tampilannya mengikuti frame Eksplorasi (Meow) di Figma.
 export function JobExplorer({ kaptenSkills, applications, onAdd, source, onSourceChange, listPage, onListPage, onPageCount }: JobExplorerProps) {
-  // State hasil fetch: data, loading, error
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0); // dinaikkan saat klik "Coba Lagi"
   const [status, setStatus] = useState<string | null>(null); // pesan dari jobService (menunggu, mencoba lagi, data tersimpan)
 
-  // State filter
   const [keyword, setKeyword] = useState('');
   const [category, setCategory] = useState('ALL');
   const [sortBy, setSortBy] = useState<SortOption>('match');
@@ -81,16 +80,14 @@ export function JobExplorer({ kaptenSkills, applications, onAdd, source, onSourc
     return () => controller.abort();
   }, [source, reloadKey]);
 
-  // ===== Derived state: dihitung langsung dari state, tidak disimpan di useState =====
+  // Derived state: dihitung langsung dari state, tidak disimpan di useState.
 
-  // Daftar kategori unik dari data lowongan
   const categories = [...new Set(jobs.map((job) => job.category))];
 
   // Tombol Enter melewati jeda debounce; selain itu pakai keyword hasil debounce.
   const search = (forced === keyword ? keyword : debouncedKeyword).trim().toLowerCase();
 
-  // 1. filter keyword & kategori, 2. hitung skill match tiap lowongan, 3. urutkan
-  // (.sort() aman di sini karena array-nya hasil baru dari .filter() dan .map(), bukan state)
+  // .sort() aman di sini karena array-nya hasil baru dari .filter() dan .map(), bukan state.
   const visibleJobs = jobs
     .filter((job) => {
       const matchKeyword = job.title.toLowerCase().includes(search) || job.company_name.toLowerCase().includes(search);
@@ -130,11 +127,10 @@ export function JobExplorer({ kaptenSkills, applications, onAdd, source, onSourc
 
   return (
     <>
-      {/* Baris atas: tombol Enter, kolom cari, kategori, urutkan */}
       <TileBtn
         box={gridBox(6, 1, 3)}
         tone="navy"
-        label="Cari sekarang"
+        label="Enter, cari sekarang"
         onClick={() => {
           setForced(keyword);
           onListPage(0);
@@ -154,25 +150,26 @@ export function JobExplorer({ kaptenSkills, applications, onAdd, source, onSourc
 
       <GridTile c={10} r={1} w={4} label="Filter kategori">
         <span className="k">&gt;/ Kategori</span>
-        <span className="select-wrap">
-          <select value={category} onChange={(e) => filterChanged(setCategory)(e.target.value)} className="dot">
-            <option value="ALL">Semua Kategori</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </span>
+        <Select
+          ariaLabel="Kategori lowongan"
+          className="dot"
+          value={category}
+          onChange={filterChanged(setCategory)}
+          options={[{ value: 'ALL', label: 'Semua Kategori' }, ...categories.map((cat) => ({ value: cat, label: cat }))]}
+        />
       </GridTile>
       <GridTile c={10} r={2} w={4} label="Urutkan lowongan">
         <span className="k">&gt;/ Urutkan</span>
-        <span className="select-wrap">
-          <select value={sortBy} onChange={(e) => filterChanged(setSortBy)(e.target.value as SortOption)} className="dot">
-            <option value="match">Match Tertinggi</option>
-            <option value="az">Judul A-Z</option>
-          </select>
-        </span>
+        <Select<SortOption>
+          ariaLabel="Urutkan lowongan"
+          className="dot"
+          value={sortBy}
+          onChange={filterChanged(setSortBy)}
+          options={[
+            { value: 'match', label: 'Match Tertinggi' },
+            { value: 'az', label: 'Judul A-Z' },
+          ]}
+        />
       </GridTile>
 
       {/* Sumber data: klik tile untuk ganti Remotive API <-> dataset lokal */}
@@ -195,7 +192,6 @@ export function JobExplorer({ kaptenSkills, applications, onAdd, source, onSourc
         </span>
       </TileBtn>
 
-      {/* State Loading / Error / Kosong */}
       {isLoading && (
         <GridTile c={6} r={3} w={8} h={2} className="gt--center" label="Memuat">
           <p className="hx">Memuat lowongan...</p>
@@ -228,7 +224,6 @@ export function JobExplorer({ kaptenSkills, applications, onAdd, source, onSourc
         </GridTile>
       )}
 
-      {/* Lowongan pertama di halaman ini: kartu besar */}
       {!isLoading && !error && featured && (
         <>
           <GridTile c={6} r={3} w={2} h={2} hot={current === 0} className="gt--center" label="Skill match">
@@ -249,11 +244,14 @@ export function JobExplorer({ kaptenSkills, applications, onAdd, source, onSourc
 
           </GridTile>
           <GridTile c={6} r={5} w={6} label="Skill">
-            <span className="xs">/ Skill kamu yang cocok</span>
-            <span className="h3">{featured.match.matchedSkills.join(', ') || 'Belum ada yang cocok'}</span>
-            {featured.match.missingSkills.length > 0 && (
-              <span className="xs" style={{ color: 'var(--red)' }}>Kurang: {featured.match.missingSkills.join(', ')}</span>
-            )}
+            {/* Daftar skill lowongan bisa sangat panjang: isinya di-scroll di dalam tile. */}
+            <div className="scroll-inner" tabIndex={0} aria-label="Skill lowongan (bisa di-scroll)">
+              <span className="xs">/ Skill kamu yang cocok</span>
+              <span className="h3">{featured.match.matchedSkills.join(', ') || 'Belum ada yang cocok'}</span>
+              {featured.match.missingSkills.length > 0 && (
+                <span className="xs" style={{ color: 'var(--red)' }}>Kurang: {featured.match.missingSkills.join(', ')}</span>
+              )}
+            </div>
           </GridTile>
           <GridButton c={12} r={5} w={2} className="gt--center" disabled={saved(featured.job)} onClick={() => handleSave(featured.job)}>
             <span className="h3 chev">{saved(featured.job) ? 'Sudah Dilamar' : 'Simpan ke Wishlist'}</span>
@@ -261,7 +259,6 @@ export function JobExplorer({ kaptenSkills, applications, onAdd, source, onSourc
         </>
       )}
 
-      {/* Sisa lowongan di halaman ini: 3 baris */}
       {!isLoading &&
         !error &&
         rest.map(({ job, match }, i) => (
@@ -297,7 +294,6 @@ function JobRow({ r, job, match, saved, onSave }: JobRowProps) {
           {job.salary ? ` / ${job.salary}` : ''}
         </span>
       </GridTile>
-      {/* Daftar skill bisa panjang: isinya di-scroll di dalam tile (lihat .scroll-inner). */}
       <GridTile c={11} r={r} w={2} label="Skill">
         <div className="scroll-inner" tabIndex={0} aria-label="Daftar skill (bisa di-scroll)">
           <span className="xs">Cocok: {match.matchedSkills.join(', ') || 'Belum ada'}</span>

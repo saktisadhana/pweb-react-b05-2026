@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { GridTile } from '../components/seno/GridTile';
+import { Select } from '../components/seno/Select';
 import type { Application } from '../types/application';
 import { formatRupiah, scoreOffers, WEIGHTS, type OfferScore } from '../utils/offerScore';
 import { getSkillMatch } from '../utils/application';
@@ -74,11 +75,13 @@ export function OfferPage({ applications, kaptenSkills }: OfferPageProps) {
   const picker = (c: number, label: string, value: string, other: string, onPick: (id: string) => void) => (
     <GridTile c={c} r={2} w={4} label={label}>
       <span className="k">&gt;/ {label}</span>
-      <span className="select-wrap">
-        <select value={value} onChange={(e) => onPick(e.target.value)}>
-          {offers.filter((o) => o.id !== other).map((o) => <option key={o.id} value={o.id}>{o.company}</option>)}
-        </select>
-      </span>
+      <Select
+        ariaLabel={label}
+        className="dot"
+        value={value}
+        onChange={onPick}
+        options={offers.filter((o) => o.id !== other).map((o) => ({ value: o.id, label: o.company }))}
+      />
     </GridTile>
   );
 
@@ -97,17 +100,17 @@ export function OfferPage({ applications, kaptenSkills }: OfferPageProps) {
         </GridTile>
         {rows.map(([k, v, points, max], i) => (
           <div key={k} style={{ display: 'contents' }}>
-            <GridTile c={c} r={4 + i} w={2} label={k}>
+            <GridTile c={c} r={4 + i} w={2} label={`${k.replace('/ ', '')} ${app.company}`}>
               <span className="k">{k}</span>
               <span className="s">{v}</span>
             </GridTile>
-            <GridTile c={c + 2} r={4 + i} w={2} label={`Skor ${k}`}>
+            <GridTile c={c + 2} r={4 + i} w={2} label={`Skor ${k.replace('/ ', '')} ${app.company}`}>
               <span className="h2">{fmt(points)} / {max}</span>
               <Blocks value={points} max={max} />
             </GridTile>
           </div>
         ))}
-        <GridTile c={c} r={7} w={4} h={2} hot={isWinner && !tie} label="Total skor">
+        <GridTile c={c} r={7} w={4} h={2} hot={isWinner && !tie} label={`Total skor ${app.company}`}>
           <span className="xs">/ Total skor berbobot</span>
           <span className="big"><CountUp value={fmt(s.total)} /></span>
           {isWinner && !tie && <span className="xs">/ Rekomendasi terbaik</span>}
