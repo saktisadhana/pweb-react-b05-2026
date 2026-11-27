@@ -1,101 +1,117 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Page, TileDef } from '../../data/figmaTiles';
-import { TileField } from './TileField';
+import { TileField, type Pager } from './TileField';
+import { STAGE_H, STAGE_W } from './TileCanvas';
+import { prefersReducedMotion } from './useCursorLight';
 
-export const STAGE_W = 1440;
-export const STAGE_H = 1238;
 const FLOW_BREAKPOINT = 900; // di bawah ini layout grid diganti jadi satu kolom
 
 interface StageProps {
   page: Page;
+  pager?: Pager;
   notifCount: number;
   onTileAction: (tile: TileDef) => void;
   onLogo: () => void;
   overlay?: ReactNode; // popup / toast, ikut di dalam stage
+  paused?: boolean; // true saat popup terbuka: efek mouse dimatikan (latar sedang di-blur)
   children: ReactNode;
 }
 
+
 // Stage = frame Figma 1440 x 1238. Semua tile dan konten diletakkan dengan
 // koordinat px Figma, lalu seluruh stage di-scale mengikuti lebar layar.
-export function Stage({ page, notifCount, onTileAction, onLogo, overlay, children }: StageProps) {
-  const stageRef = useRef<HTMLDivElement>(null);
+export function Stage({ page, pager, notifCount, onTileAction, onLogo, overlay, paused = false, children }: StageProps) {
+  const contentRef = useRef<HTMLElement>(null);
+  const [blocked, setBlocked] = useState<string | undefined>(undefined);
   const [scale, setScale] = useState(1);
   const [flow, setFlow] = useState(false);
   const [fieldScale, setFieldScale] = useState(1);
+  const [dpr, setDpr] = useState(1);
 
   useLayoutEffect(() => {
+    let timer = 0;
     const fit = () => {
       const w = document.documentElement.clientWidth;
       setFlow(w < FLOW_BREAKPOINT);
       setScale(w / STAGE_W);
       // Mode HP: tile jadi background tetap, di-scale mengikuti tinggi layar.
       setFieldScale(Math.max(0.55, Math.min(0.8, window.innerHeight / STAGE_H)));
+      setDpr(window.devicePixelRatio || 1);
+    };
+    // Saat jendela di-resize, tunggu sebentar sebelum menghitung ulang
+    // (canvas tidak perlu dibuat ulang di setiap piksel resize).
+    const onResize = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(fit, 120);
     };
     fit();
-    window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('resize', onResize);
+    };
   }, []);
 
-  // Posisi mouse -> CSS variable. Maksimal 1 update per frame (requestAnimationFrame).
-  // --px/--py: posisi mouse dalam koordinat stage (untuk cahaya spot).
-  // --mx/--my: -1..1 dari tengah layar (untuk menggeser mask warna tile).
+  // Ukur posisi semua tile konten, supaya area yang kosong bisa diisi tile biru/kuning.
+  // Diukur ulang setiap isi halaman berubah (pindah halaman, filter, pagination, dll).
+  // Memakai offsetLeft/offsetTop (posisi layout), jadi tidak terganggu animasi masuk.
   useEffect(() => {
-    const el = stageRef.current;
-    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
+    const el = contentRef.current;
+    if (flow || !el) {
+      setBlocked(undefined);
+      return;
+    }
     let frame = 0;
-    let cx = window.innerWidth / 2;
-    let cy = window.innerHeight / 2;
-    let mx = 0; // nilai yang sedang tampil, mengejar target pelan-pelan (efek "berat")
-    let my = 0;
-
-    const apply = () => {
-      const r = el.getBoundingClientRect();
-      const s = r.width / STAGE_W;
-      el.style.setProperty('--px', `${((cx - r.left) / s).toFixed(1)}px`);
-      el.style.setProperty('--py', `${((cy - r.top) / s).toFixed(1)}px`);
-
-      const tx = cx / window.innerWidth - 0.5;
-      const ty = cy / window.innerHeight - 0.5;
-      mx += (tx - mx) * 0.08;
-      my += (ty - my) * 0.08;
-      el.style.setProperty('--mx', mx.toFixed(4));
-      el.style.setProperty('--my', my.toFixed(4));
-
-      // Terus animasi sampai posisi mask sudah sampai target.
-      frame = Math.abs(tx - mx) + Math.abs(ty - my) > 0.0005 ? requestAnimationFrame(apply) : 0;
+    const measure = () => {
+      frame = 0;
+      const rects: string[] = [];
+      el.querySelectorAll<HTMLElement>('.gt:not(.cell), .row, .empty-note').forEach((node) => {
+        let x = 0;
+        let y = 0;
+        let cur: HTMLElement | null = node;
+        while (cur && cur !== el) {
+          x += cur.offsetLeft;
+          y += cur.offsetTop;
+          cur = cur.offsetParent as HTMLElement | null;
+        }
+        rects.push([x, y, node.offsetWidth, node.offsetHeight].map(Math.round).join(','));
+      });
+      setBlocked(rects.sort().join(';'));
     };
-
-    const onMove = (e: PointerEvent) => {
-      cx = e.clientX;
-      cy = e.clientY;
-      el.classList.add('has-pointer');
-      if (!frame) frame = requestAnimationFrame(apply);
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
     };
-    const onLeave = () => el.classList.remove('has-pointer');
-
-    window.addEventListener('pointermove', onMove, { passive: true });
-    document.addEventListener('pointerleave', onLeave);
+    const observer = new MutationObserver(schedule);
+    observer.observe(el, { childList: true, subtree: true });
+    schedule();
     return () => {
-      window.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerleave', onLeave);
+      observer.disconnect();
       cancelAnimationFrame(frame);
     };
-  }, []);
+  }, [flow, page]);
+
+  // Resolusi canvas = ukuran tampil x devicePixelRatio, maksimal 3x (layar 4K/retina tetap tajam).
+  const shown = flow ? fieldScale : scale;
+  const resolution = Math.round(Math.min(3, Math.max(0.5, shown * dpr)) * 4) / 4;
 
   return (
     <div
       className={`stage-wrap${flow ? ' is-flow' : ''}`}
       style={flow ? ({ '--fs': fieldScale } as CSSProperties) : { height: STAGE_H * scale }}
     >
-      <div
-        ref={stageRef}
-        className="stage"
-        style={flow ? undefined : { transform: `scale(${scale})` }}
-      >
-        <TileField page={page} notifCount={notifCount} onAction={onTileAction} onLogo={onLogo} />
+      <div className="stage" style={flow ? undefined : { transform: `scale(${scale})`, width: STAGE_W, height: STAGE_H }}>
+        <TileField
+          page={page}
+          pager={pager}
+          blocked={blocked}
+          notifCount={notifCount}
+          resolution={resolution}
+          effects={!flow && !paused && !prefersReducedMotion()}
+          onAction={onTileAction}
+          onLogo={onLogo}
+        />
         {/* key={page}: konten dipasang ulang saat pindah halaman, jadi animasi masuk diputar lagi. */}
-        <main className="content" key={page}>
+        <main className="content" key={page} ref={contentRef}>
           {children}
         </main>
         {overlay}

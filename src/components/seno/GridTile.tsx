@@ -1,9 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 
-// Rumus grid dari Figma: tile 100px, jarak 5px.
-export const colX = (c: number) => -65 + 105 * c;
-export const rowY = (r: number) => 59 + 105 * r;
-export const span = (n: number) => 105 * n - 5;
+import { colX, rowY, span } from './grid';
 
 interface GridTileProps {
   c: number; // kolom (1 = x 40)
@@ -40,17 +37,18 @@ export function GridTile({ c, r, w = 1, h = 1, hot, className = '', label, child
 }
 
 interface GridButtonProps extends Omit<GridTileProps, 'label'> {
-  onClick: () => void;
+  onClick?: () => void;
+  type?: 'button' | 'submit';
   disabled?: boolean;
   ariaLabel?: string;
   pressed?: boolean;
 }
 
 // Tile konten yang bisa diklik. Saat ditekan: glow kuning menyala (biru -> kuning).
-export function GridButton({ c, r, w = 1, h = 1, hot, className = '', onClick, disabled, ariaLabel, pressed, children }: GridButtonProps) {
+export function GridButton({ c, r, w = 1, h = 1, hot, className = '', onClick, type = 'button', disabled, ariaLabel, pressed, children }: GridButtonProps) {
   return (
     <button
-      type="button"
+      type={type}
       className={`gt gt--btn${hot ? ' is-hot' : ''} ${className}`}
       style={gridStyle(c, r, w, h)}
       onClick={onClick}

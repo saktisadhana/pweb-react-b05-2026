@@ -13,6 +13,7 @@ const tasks = (items: [string, boolean][]): ChecklistItem[] =>
   items.map(([text, done], i) => ({ id: `t${i}-${text.length}`, text, done }));
 
 export const SAMPLE_SKILLS = ['React', 'TypeScript', 'CSS', 'Git', 'REST API', 'PostgreSQL'];
+export const DEFAULT_SKILLS = ['React', 'TypeScript', 'CSS']; // akun baru (soal: minimal 3 skill awal)
 
 export const SAMPLE_APPLICATIONS: Application[] = [
   { id: 'a2', company: 'Bintang Commerce', role: 'Software Engineer Intern', workMode: 'Remote', status: 'OFFER',

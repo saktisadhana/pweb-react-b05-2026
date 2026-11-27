@@ -14,9 +14,11 @@ export function ConflictTile({ applications, onOpen }: ConflictTileProps) {
 
   if (conflicts.length === 0) {
     return (
-      <GridTile c={6} r={1} w={8} label="Jadwal interview">
-        <span className="h2">/ Jadwal interview aman</span>
-        <span className="s muted">Tidak ada dua interview yang jaraknya kurang dari 60 menit.</span>
+      <GridTile c={6} r={1} w={8} className="gt--row" label="Jadwal interview">
+        <span className="s muted">Tidak ada jadwal interview yang bentrok.</span>
+        <button type="button" className="chip" onClick={onOpen}>
+          <span className="chev">Agenda</span>
+        </button>
       </GridTile>
     );
   }
@@ -26,14 +28,12 @@ export function ConflictTile({ applications, onOpen }: ConflictTileProps) {
 
   return (
     <GridTile c={6} r={1} w={8} hot className="gt--row" label="Jadwal interview bentrok">
-      <div>
-        <p className="h2">/ Jadwal interview bentrok</p>
-        <p className="s">
-          {a.company} ({formatShortDate(a.interviewDateTime ?? '')}) dan {b.company} ({formatShortDate(b.interviewDateTime ?? '')}) berselisih {differenceMinutes} menit.{more}
-        </p>
-      </div>
+      <p className="v">
+        Interview <b className="dot">{a.company}</b> ({formatShortDate(a.interviewDateTime ?? '')}) dan{' '}
+        <b className="dot">{b.company}</b> ({formatShortDate(b.interviewDateTime ?? '')}) hanya berjarak {differenceMinutes} menit.{more}
+      </p>
       <button type="button" className="chip" onClick={onOpen}>
-        <span className="chev">Lihat</span>
+        <span className="chev">Agenda</span>
       </button>
     </GridTile>
   );

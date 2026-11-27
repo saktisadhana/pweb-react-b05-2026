@@ -61,9 +61,11 @@ const toIcsDate = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\
 // Bonus: halaman Agenda (layout dari frame "Agenda" di Figma).
 export function AgendaPage({ applications, onOpenDetail }: AgendaPageProps) {
   const [weekOffset, setWeekOffset] = useState(0);
+  // "Hari ini" diambil sekali saat halaman dibuka (render harus murni, tidak memanggil new Date()).
+  const [now] = useState(() => new Date());
   const [show, setShow] = useState<Record<Kind, boolean>>({ interview: true, ghosting: true, applied: true, wishlist: false });
 
-  const start = new Date(startOfWeek(new Date()).getTime() + weekOffset * 7 * DAY);
+  const start = new Date(startOfWeek(now).getTime() + weekOffset * 7 * DAY);
   const days = Array.from({ length: 7 }, (_, i) => new Date(start.getTime() + i * DAY));
   const end = days[6];
 
@@ -110,8 +112,7 @@ export function AgendaPage({ applications, onOpenDetail }: AgendaPageProps) {
   return (
     <>
       <GridTile c={6} r={1} w={4} label="Agenda">
-        <span className="h1">/ Agenda</span>
-        <span className="xs">{range}</span>
+        <span className="h1">{range}</span>
       </GridTile>
       <GridButton c={10} r={1} w={2} className="gt--center" onClick={() => setWeekOffset((w) => w - 1)}>
         <span className="s chev">Minggu lalu</span>
@@ -122,16 +123,15 @@ export function AgendaPage({ applications, onOpenDetail }: AgendaPageProps) {
 
       {conflicts.length > 0 ? (
         <GridTile c={6} r={2} w={8} hot label="Jadwal bentrok">
-          <span className="h2">
-            / {conflicts.length * 2} interview bentrok di {LONG_DAY[new Date(conflicts[0].firstApplication.interviewDateTime ?? '').getDay()]}, {new Date(conflicts[0].firstApplication.interviewDateTime ?? '').getDate()} {monthName(new Date(conflicts[0].firstApplication.interviewDateTime ?? '').getMonth())}
-          </span>
-          <span className="xs">
-            {conflicts[0].firstApplication.company} {formatTime(conflicts[0].firstApplication.interviewDateTime ?? '')} dan {conflicts[0].secondApplication.company} {formatTime(conflicts[0].secondApplication.interviewDateTime ?? '')}, selisih {conflicts[0].differenceMinutes} menit.
+          <span className="v">
+            Interview <b className="dot">{conflicts[0].firstApplication.company}</b> {formatTime(conflicts[0].firstApplication.interviewDateTime ?? '')} dan{' '}
+            <b className="dot">{conflicts[0].secondApplication.company}</b> {formatTime(conflicts[0].secondApplication.interviewDateTime ?? '')} di hari{' '}
+            {LONG_DAY[new Date(conflicts[0].firstApplication.interviewDateTime ?? '').getDay()]} hanya berjarak {conflicts[0].differenceMinutes} menit.
           </span>
         </GridTile>
       ) : (
         <GridTile c={6} r={2} w={8} label="Jadwal bentrok">
-          <span className="h2">/ Tidak ada jadwal bentrok minggu ini</span>
+          <span className="s muted">Tidak ada jadwal interview yang bentrok minggu ini.</span>
         </GridTile>
       )}
 
@@ -139,7 +139,7 @@ export function AgendaPage({ applications, onOpenDetail }: AgendaPageProps) {
         const r = 3 + i;
         const list = byDay(d);
         const isConflict = toDateKey(d) === conflictDay;
-        const today = toDateKey(d) === toDateKey(new Date());
+        const today = toDateKey(d) === toDateKey(now);
         return (
           <div key={toDateKey(d)} style={{ display: 'contents' }}>
             <GridTile c={6} r={r} hot={isConflict} className={`gt--center${list.length === 0 ? ' gt--quiet' : ''}`} label={`${LONG_DAY[d.getDay()]} ${d.getDate()}`}>
@@ -183,7 +183,7 @@ export function AgendaPage({ applications, onOpenDetail }: AgendaPageProps) {
       })}
 
       <GridTile c={1} r={4} w={5} h={2} className="gt--top" label="Tampilkan">
-        <span className="h2">/ Tampilkan</span>
+        <span className="k">&gt;/ Tampilkan</span>
         {(Object.keys(KIND_LABEL) as Kind[]).map((k) => (
           <span key={k} className="spread s" style={{ alignItems: 'center', marginTop: 6 }}>
             {KIND_LABEL[k]}

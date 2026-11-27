@@ -9,11 +9,12 @@ const formatClock = (s: number) =>
 
 interface InterviewTimerProps {
   questions?: string[];
+  onClose: () => void; // menutup panel = komponen ini di-unmount, interval dibersihkan oleh cleanup
 }
 
 // Fitur 5 (Sakti). Posisi tile mengikuti frame Detail di Figma:
 // soal (10,4, 4x4), jam (10,8, 2x2), jeda (12,8, 2), reset (12,9), lanjut (13,9).
-export function InterviewTimer({ questions = INTERVIEW_QUESTIONS }: InterviewTimerProps) {
+export function InterviewTimer({ questions = INTERVIEW_QUESTIONS, onClose }: InterviewTimerProps) {
   const [index, setIndex] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(DURATION_SECONDS);
   const [isRunning, setIsRunning] = useState(false);
@@ -45,9 +46,11 @@ export function InterviewTimer({ questions = INTERVIEW_QUESTIONS }: InterviewTim
   return (
     <>
       <GridTile c={10} r={4} w={4} h={4} className="gt--top" label="Latihan interview">
-        <div className="spread">
-          <span className="h2">/ Latihan interview</span>
-          <span className="xs">Soal {index + 1} / {questions.length}</span>
+        <div className="spread" style={{ alignItems: 'center' }}>
+          <span className="xs">Soal latihan {index + 1} / {questions.length}</span>
+          <button type="button" className="chip" onClick={onClose}>
+            Tutup latihan
+          </button>
         </div>
         {/* key: animasi masuk diputar ulang setiap ganti soal */}
         <p key={index} className="question" style={{ marginTop: 14, animation: 'gt-in .5s var(--ease) both' }}>
@@ -61,7 +64,7 @@ export function InterviewTimer({ questions = INTERVIEW_QUESTIONS }: InterviewTim
       </GridTile>
 
       <GridTile c={10} r={8} w={2} h={2} className="gt--center" label="Sisa waktu">
-        <span className={`clock${isDone ? ' is-done' : ''}`} role="timer">{formatClock(secondsLeft)}</span>
+        <span className={`clock${isDone ? ' is-done' : running ? ' is-running' : ''}`} role="timer">{formatClock(secondsLeft)}</span>
         <span className="xs" role="status">{isDone ? '/ waktu habis' : '/ sisa waktu'}</span>
         <span className="bar" style={{ width: '70%' }}>
           <i style={{ width: `${(secondsLeft / DURATION_SECONDS) * 100}%` }} />
