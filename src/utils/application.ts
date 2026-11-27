@@ -51,25 +51,25 @@ export function createApplication(
   const role = input.role.trim();
 
   if (!company || !role) {
-    throw new Error("Company and role are required.");
+    throw new Error("Perusahaan dan posisi wajib diisi.");
   }
 
   if (isDuplicateApplication(applications, company, role)) {
-    throw new Error("An application for this company and role already exists.");
+    throw new Error("Lamaran untuk perusahaan dan posisi ini sudah ada.");
   }
 
   if (
     input.status === "APPLIED" &&
     (!input.cvVersion?.trim() || !input.appliedDate?.trim())
   ) {
-    throw new Error("CV version and applied date are required for APPLIED.");
+    throw new Error("Versi CV dan tanggal melamar wajib diisi untuk status APPLIED.");
   }
 
   const timestamp = now.toISOString();
   const activityLog: ActivityLog = {
     id: crypto.randomUUID(),
     timestamp,
-    message: `Application created with status ${input.status}.`,
+    message: `Lamaran dibuat dengan status ${input.status}.`,
   };
 
   return {
@@ -115,7 +115,7 @@ export function addCaptainSkill(
 ): string[] {
   const normalizedSkill = normalize(skill);
   if (!normalizedSkill) {
-    throw new Error("A skill cannot be empty.");
+    throw new Error("Skill tidak boleh kosong.");
   }
 
   if (
@@ -123,7 +123,7 @@ export function addCaptainSkill(
       (existingSkill) => normalize(existingSkill) === normalizedSkill,
     )
   ) {
-    throw new Error(`The skill "${skill.trim()}" is already in the profile.`);
+    throw new Error(`Skill "${skill.trim()}" sudah ada di profil.`);
   }
 
   return [...captainSkills, skill.trim()];

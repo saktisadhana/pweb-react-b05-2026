@@ -19,14 +19,14 @@ export function findInterviewConflicts(
     .map((application) => {
       if (!application.interviewDateTime) {
         throw new Error(
-          `INTERVIEW application "${application.id}" has no interviewDateTime.`,
+          `Lamaran INTERVIEW "${application.company}" belum punya jadwal interview.`,
         );
       }
 
       const scheduledTime = Date.parse(application.interviewDateTime);
       if (Number.isNaN(scheduledTime)) {
         throw new RangeError(
-          `INTERVIEW application "${application.id}" has an invalid interviewDateTime.`,
+          `Jadwal interview "${application.company}" tidak valid.`,
         );
       }
 
