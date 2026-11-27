@@ -170,6 +170,8 @@ function Workspace({ user, theme, setTheme, onLogout }: WorkspaceProps) {
           onDelete={remove}
           onSimulateGhosting={simulateGhosting}
           onAdd={() => setPopup('add')}
+          onExplore={goExplore}
+          onLoadSample={() => setApplications(SAMPLE_APPLICATIONS)}
           onOpenAgenda={() => navigate('agenda')}
           searchRef={searchRef}
           listPage={listPage}

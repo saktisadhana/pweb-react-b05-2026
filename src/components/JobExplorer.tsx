@@ -297,13 +297,16 @@ function JobRow({ r, job, match, saved, onSave }: JobRowProps) {
           {job.salary ? ` / ${job.salary}` : ''}
         </span>
       </GridTile>
+      {/* Daftar skill bisa panjang: isinya di-scroll di dalam tile (lihat .scroll-inner). */}
       <GridTile c={11} r={r} w={2} label="Skill">
-        <span className="xs">Cocok: {match.matchedSkills.join(', ') || 'Belum ada'}</span>
-        {match.missingSkills.length > 0 && (
-          <span className="s" style={{ color: 'var(--red)' }}>
-            Kurang: {match.missingSkills.join(', ')}
-          </span>
-        )}
+        <div className="scroll-inner" tabIndex={0} aria-label="Daftar skill (bisa di-scroll)">
+          <span className="xs">Cocok: {match.matchedSkills.join(', ') || 'Belum ada'}</span>
+          {match.missingSkills.length > 0 && (
+            <span className="s" style={{ color: 'var(--red)' }}>
+              Kurang: {match.missingSkills.join(', ')}
+            </span>
+          )}
+        </div>
       </GridTile>
       <GridButton c={13} r={r} className="gt--center" disabled={saved} onClick={onSave}>
         <span className="xs chev">{saved ? 'Sudah Dilamar' : 'Simpan'}</span>

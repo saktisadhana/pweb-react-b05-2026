@@ -108,6 +108,9 @@ const NAV: Row[] = [
   [40, 269, 415, 100, 'B', { ...lab('> Compare-', 40, 21), action: { type: 'nav', page: 'offer' }, currentOn: ['offer'] }],
   [460, 269, 100, 100, 'B', { icon: ICONS.text, name: 'Compare-Offer (ikon)', action: { type: 'nav', page: 'offer' }, currentOn: ['offer'] }],
   [40, 374, 205, 100, 'B', { ...lab('-Offer', 18, 21), action: { type: 'nav', page: 'offer' }, currentOn: ['offer'] }],
+  // Di Figma tile ini hanya hiasan kuning. Dipakai sebagai menu Eksplorasi supaya halaman itu
+  // bisa dibuka langsung dari menu (sebelumnya hanya lewat logo SENO, dan user tidak tahu).
+  [250, 374, 205, 100, 'B', { ...lab('> Cari', 18, 21), name: 'Eksplorasi: cari lowongan', action: { type: 'nav', page: 'explore' }, currentOn: ['explore'] }],
 ];
 
 const ARROWS: Row = [355, 1004, 205, 100, 'B', { ...lab('<<<<', 33, 21), action: { type: 'back' } }];
@@ -118,7 +121,6 @@ const SHARED: Row[] = [
   [1405, 164, 100, 205, 'B'],
   [-65, 269, 100, 205, 'B'],
   [985, 269, 415, 100, 'B'],
-  [250, 374, 205, 100, 'Y'],
   [1405, 374, 100, 625, 'B'],
   [-65, 689, 100, 205, 'B'],
   [-65, 899, 100, 100, 'B'],
@@ -150,7 +152,6 @@ const EXPLORE: Row[] = [
   [565, 269, 310, 100, 'Y'],
   [880, 269, 100, 100, 'B'],
   [985, 269, 415, 100, 'B'],
-  [250, 374, 205, 100, 'Y'],
   [1405, 374, 100, 625, 'B'],
   [40, 479, 520, 100, 'B'],
   [40, 584, 415, 100, 'Y'],

@@ -368,6 +368,28 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .row .act { align-items: center; justify-content: center; font-size: 12.5px; text-align: center; }
 
 .empty-note { padding: 30px; text-align: center; }
+/* Isi tile yang lebih panjang dari tilenya: di-scroll di area dalam, jadi padding tile tetap
+   terlihat dan teks memudar sebelum tepi (tidak terpotong mentah di pinggir tile). */
+.scroll-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 6px 12px 0;
+  margin-right: -10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(35, 63, 124, 0.35) transparent;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent);
+}
+.scroll-inner > * { flex-shrink: 0; }
+.scroll-inner:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.scroll-inner::-webkit-scrollbar { width: 5px; }
+.scroll-inner::-webkit-scrollbar-thumb { background: rgba(35, 63, 124, 0.35); border-radius: 3px; }
+.empty-note__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 16px; }
 
 /* ---------- Popup ---------- */
 

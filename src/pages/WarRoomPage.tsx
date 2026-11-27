@@ -19,6 +19,8 @@ interface WarRoomPageProps {
   onDelete: (id: string) => void;
   onSimulateGhosting: (id: string) => void;
   onAdd: () => void;
+  onExplore: () => void; // tombol di daftar kosong: cari lowongan di Eksplorasi
+  onLoadSample: () => void; // tombol di daftar kosong: isi dengan data contoh
   onOpenAgenda: () => void;
   searchRef: RefObject<HTMLInputElement | null>;
   listPage: number; // halaman daftar (0 = halaman 1), dipilih lewat tile nomor
@@ -34,7 +36,7 @@ const SORT_LABEL: Record<SortKey, string> = {
   offer: 'Offer Tertinggi',
 };
 
-export function WarRoomPage({ applications, kaptenSkills, onOpenDetail, onDelete, onSimulateGhosting, onAdd, onOpenAgenda, searchRef, listPage, onListPage, onPageCount }: WarRoomPageProps) {
+export function WarRoomPage({ applications, kaptenSkills, onOpenDetail, onDelete, onSimulateGhosting, onAdd, onExplore, onLoadSample, onOpenAgenda, searchRef, listPage, onListPage, onPageCount }: WarRoomPageProps) {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<ApplicationStatus | 'ALL'>('ALL');
   const [sort, setSort] = useState<SortKey>('newest');
@@ -159,9 +161,26 @@ export function WarRoomPage({ applications, kaptenSkills, onOpenDetail, onDelete
       <div className="rows" role="list" aria-label={`Daftar lamaran, halaman ${current + 1} dari ${pageCount}`} key={current}>
         {visible.length === 0 && (
           <div className="gt cell empty-note" style={{ height: 'auto' }}>
-            <p className="s">
-              {applications.length === 0 ? 'Belum ada lamaran. Mulai dari "+ Tambah lamaran".' : 'Tidak ada lamaran yang cocok dengan filter ini.'}
-            </p>
+            {applications.length === 0 ? (
+              <>
+                {/* Akun baru mulai kosong. Sumber data (Remotive / dataset lokal) hanya mengisi
+                    daftar lowongan di Eksplorasi; lowongan baru masuk ke sini setelah disimpan. */}
+                <p className="s">Belum ada lamaran. Simpan lowongan dari Eksplorasi (Remotive atau dataset lokal), tambah manual, atau isi data contoh.</p>
+                <div className="empty-note__actions">
+                  <button type="button" className="chip" onClick={onExplore}>
+                    <span className="chev">Cari di Eksplorasi</span>
+                  </button>
+                  <button type="button" className="chip" onClick={onAdd}>
+                    <span className="chev">+ Tambah manual</span>
+                  </button>
+                  <button type="button" className="chip" onClick={onLoadSample}>
+                    <span className="chev">Isi data contoh</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="s">Tidak ada lamaran yang cocok dengan filter ini.</p>
+            )}
           </div>
         )}
         {shown.map((a, i) => (
