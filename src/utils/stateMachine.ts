@@ -38,7 +38,7 @@ export function transitionApplication(
 ): Application {
   if (!getAllowedTransitions(application.status).includes(nextStatus)) {
     throw new Error(
-      `Transition from ${application.status} to ${nextStatus} is not allowed.`,
+      `Status ${application.status} tidak bisa pindah ke ${nextStatus}.`,
     );
   }
 
@@ -47,7 +47,7 @@ export function transitionApplication(
     nextStatus === "APPLIED" &&
     (!updatedFields.cvVersion?.trim() || !updatedFields.appliedDate?.trim())
   ) {
-    throw new Error("CV version and applied date are required for APPLIED.");
+    throw new Error("Versi CV dan tanggal melamar wajib diisi untuk status APPLIED.");
   }
 
   if (
@@ -59,7 +59,7 @@ export function transitionApplication(
       Number.isNaN(Date.parse(updatedFields.interviewDateTime)))
   ) {
     throw new Error(
-      "A valid interview date and time in YYYY-MM-DDTHH:mm format is required.",
+      "Jadwal interview wajib diisi dengan format YYYY-MM-DDTHH:mm.",
     );
   }
 
@@ -68,12 +68,12 @@ export function transitionApplication(
     (!(updatedFields.salaryOffer && updatedFields.salaryOffer > 0) ||
       !updatedFields.workMode)
   ) {
-    throw new Error("A positive salary offer and work mode are required for OFFER.");
+    throw new Error("Uang saku (lebih dari 0) dan mode kerja wajib diisi untuk status OFFER.");
   }
 
   const timestamp = now.toISOString();
   const activityLog = createActivityLog(
-    `Status changed from ${application.status} to ${nextStatus}.`,
+    `Status berubah dari ${application.status} ke ${nextStatus}.`,
     timestamp,
   );
 
@@ -92,7 +92,7 @@ export function addApplicationNote(
 ): Application {
   const message = note.trim();
   if (!message) {
-    throw new Error("An activity note cannot be empty.");
+    throw new Error("Catatan tidak boleh kosong.");
   }
 
   const timestamp = now.toISOString();
@@ -111,7 +111,7 @@ export function addChecklistItem(
 ): Application {
   const itemText = text.trim();
   if (!itemText) {
-    throw new Error("A checklist item cannot be empty.");
+    throw new Error("Item checklist tidak boleh kosong.");
   }
 
   const item: ChecklistItem = {
@@ -138,7 +138,7 @@ export function toggleChecklistItem(
   });
 
   if (!found) {
-    throw new Error(`Checklist item "${itemId}" was not found.`);
+    throw new Error(`Item checklist "${itemId}" tidak ditemukan.`);
   }
 
   return { ...application, checklist };
@@ -149,7 +149,7 @@ export function removeChecklistItem(
   itemId: string,
 ): Application {
   if (!application.checklist.some((item) => item.id === itemId)) {
-    throw new Error(`Checklist item "${itemId}" was not found.`);
+    throw new Error(`Item checklist "${itemId}" tidak ditemukan.`);
   }
 
   return {

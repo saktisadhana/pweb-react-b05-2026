@@ -14,8 +14,9 @@ function readStoredValue<T>(key: string, initialValue: T): T {
     const parsedValue: unknown = JSON.parse(storedValue);
     return parsedValue as T;
   } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`Could not read localStorage key "${key}": ${detail}`);
+    // Data rusak/bukan JSON: jangan bikin seluruh app crash, pakai nilai awal.
+    console.warn(`Data localStorage "${key}" tidak bisa dibaca, memakai nilai awal.`, error);
+    return initialValue;
   }
 }
 
@@ -36,8 +37,8 @@ export function useLocalStorage<T>(
 
       window.localStorage.setItem(key, serializedValue);
     } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
-      throw new Error(`Could not write localStorage key "${key}": ${detail}`);
+      // Storage penuh atau diblokir browser: state tetap jalan di memori.
+      console.warn(`Data localStorage "${key}" tidak bisa disimpan.`, error);
     }
   }, [key, value]);
 

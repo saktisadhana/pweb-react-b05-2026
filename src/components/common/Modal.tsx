@@ -17,11 +17,16 @@ export function Modal({ title, onClose, children }: ModalProps) {
 
   useEffect(() => {
     closeRef.current?.focus();
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden'; // halaman di belakang modal tidak ikut ter-scroll
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onCloseRef.current();
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
   }, []);
 
   return (

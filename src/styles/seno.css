@@ -32,6 +32,7 @@
 
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; min-height: 100%; }
+body { background: var(--paper); overflow-x: hidden; }
 body { font-family: var(--font-text); font-weight: 700; font-size: 15px; line-height: 1.4; }
 button, select, input { font: inherit; color: inherit; }
 ::selection { background: var(--amber); color: var(--navy); }
@@ -43,26 +44,39 @@ p { margin: 0; }
 
 /* ---------- Layout ---------- */
 .app {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 16px;
   padding: 16px;
   color: var(--text);
-  background:
-    radial-gradient(60% 50% at 100% 0%, rgb(253 187 22 / 0.28), transparent 70%),
-    radial-gradient(50% 60% at 0% 100%, rgb(35 63 124 / 0.22), transparent 70%),
-    var(--paper);
+  background: var(--paper);
+  transition: background-color 300ms ease-out, color 300ms ease-out;
 }
-.main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.main { display: flex; flex-direction: column; gap: 12px; min-width: 0; position: relative; z-index: 1; }
+.sidebar { z-index: 1; }
+.page { display: flex; flex-direction: column; gap: 12px; animation: page-in 320ms cubic-bezier(.2,.8,.2,1); }
 
 /* ---------- Tiles ---------- */
 .tile {
+  position: relative;
   background: var(--surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 16px 20px;
+  transition: transform 220ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms ease-out;
 }
+/* Cahaya kecil yang mengikuti mouse di dalam tile (posisi dari usePointerFx) */
+.tile::before, .nav-tile::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(220px circle at var(--px, 50%) var(--py, 50%), rgb(253 187 22 / 0.16), transparent 70%);
+  opacity: 0; transition: opacity 220ms ease-out;
+}
+.tile:hover::before, .nav-tile:hover::before { opacity: 1; }
+.tile > * { position: relative; }
+.app-list__row:hover, .stats__item:hover, .offer__row:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgb(35 63 124 / 0.2); }
 .tile--hot { box-shadow: var(--glow-amber), var(--shadow); }
 
 /* ---------- Sidebar ---------- */
@@ -72,12 +86,14 @@ p { margin: 0; }
 .sidebar__nav { display: grid; gap: var(--gap); }
 
 .nav-tile {
+  position: relative; overflow: hidden;
   display: flex; align-items: center; gap: 10px;
   height: 64px; padding: 0 20px; border: 0; border-radius: var(--radius); cursor: pointer;
   font-family: var(--font-dot); font-size: 17px; text-align: left; color: #fff;
   background: linear-gradient(110deg, var(--navy) 0%, var(--navy) 70%, rgb(35 63 124 / 0.55) 100%);
-  transition: box-shadow var(--press-ms) ease-out, background-color var(--press-ms) ease-out;
+  transition: box-shadow var(--press-ms) ease-out, background-color var(--press-ms) ease-out, transform 220ms cubic-bezier(.2,.8,.2,1);
 }
+.nav-tile:hover { transform: translateX(4px); }
 .nav-tile__prefix { color: var(--amber); }
 .nav-tile.is-current {
   color: var(--navy);
@@ -162,7 +178,7 @@ p { margin: 0; }
 
 /* ---------- Modal ---------- */
 .modal { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: rgb(13 22 48 / 0.5); z-index: 20; animation: fade 200ms ease-out; }
-.modal__panel { width: min(720px, 100%); max-height: calc(100vh - 32px); overflow: auto; display: grid; gap: 20px; padding: 24px; }
+.modal__panel { animation: pop-in 240ms cubic-bezier(.2,.8,.2,1); width: min(720px, 100%); max-height: calc(100vh - 32px); overflow: auto; display: grid; gap: 20px; padding: 24px; }
 .modal__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 
 /* ---------- Undo toast ---------- */
@@ -182,6 +198,22 @@ p { margin: 0; }
 .app-list__row > div { flex: 1; display: grid; gap: 2px; }
 .empty { display: grid; gap: 10px; padding: 40px; }
 
+/* ---------- Background tile yang bereaksi ke mouse ---------- */
+.bg { position: fixed; inset: -40px; z-index: 0; pointer-events: none; overflow: hidden;
+  transform: translate3d(calc(var(--mx-r, 0) * -18px), calc(var(--my-r, 0) * -18px), 0);
+  transition: transform 600ms cubic-bezier(.2,.8,.2,1); }
+.bg-tiles { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(auto-fill, 100px); grid-auto-rows: 100px; gap: 5px; opacity: 0.22; }
+.bg-tile { border-radius: var(--radius); }
+.bg-tile--navy { background: linear-gradient(var(--a), var(--navy), rgb(35 63 124 / 0.05)); }
+.bg-tile--amber { background: linear-gradient(var(--a), var(--amber), rgb(253 187 22 / 0.05)); }
+/* Lapisan kedua lebih terang, hanya terlihat di sekitar mouse */
+.bg-tiles--lit { opacity: 0.75;
+  -webkit-mask-image: radial-gradient(260px circle at calc(var(--mx, -999px) + 40px) calc(var(--my, -999px) + 40px), #000 0%, transparent 75%);
+  mask-image: radial-gradient(260px circle at calc(var(--mx, -999px) + 40px) calc(var(--my, -999px) + 40px), #000 0%, transparent 75%); }
+[data-theme='dark'] .bg-tiles { opacity: 0.3; }
+
+@keyframes page-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
 @keyframes shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 @keyframes rise { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
@@ -191,9 +223,11 @@ p { margin: 0; }
   .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
-  .app { grid-template-columns: 1fr; }
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { min-width: 0; }
   .sidebar { position: static; }
-  .sidebar__nav { grid-auto-flow: column; grid-auto-columns: minmax(180px, 1fr); overflow-x: auto; }
+  .sidebar__nav { grid-auto-flow: column; grid-auto-columns: minmax(170px, 1fr); overflow-x: auto; scrollbar-width: none; }
+  .nav-tile { height: 56px; font-size: 15px; }
   .offer__pickers, .offer__grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
@@ -202,6 +236,8 @@ p { margin: 0; }
   .toast { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .bg { transform: none !important; }
+  .bg-tiles--lit { display: none; }
   *, *::before, *::after { transition: none !important; animation-duration: 1ms !important; }
   .toast__bar { animation-duration: 5000ms !important; }
 }

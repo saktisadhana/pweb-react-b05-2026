@@ -28,7 +28,7 @@ export function ageApplicationForGhosting(
   days = 15,
 ): Application {
   if (application.status !== "APPLIED" && application.status !== "SCREENING") {
-    throw new Error("Only APPLIED or SCREENING applications can be aged.");
+    throw new Error("Simulasi +15 hari hanya untuk status APPLIED atau SCREENING.");
   }
 
   if (!Number.isFinite(days) || days <= 0) {
