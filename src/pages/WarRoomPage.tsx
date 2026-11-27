@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useState, type CSSProperties, type RefObject } from 'react';
 import { GridButton, GridTile } from '../components/seno/GridTile';
 import { ConflictTile } from '../components/seno/ConflictTile';
 import { APPLICATION_STATUSES, type Application, type ApplicationStatus } from '../types/application';
@@ -7,8 +7,10 @@ import { getSkillMatch } from '../utils/application';
 import { getChecklistProgress } from '../utils/stateMachine';
 import { isAtRiskOfGhosting } from '../utils/ghosting';
 import { formatShortDate, formatJuta } from '../utils/format';
+import { CountUp } from '../components/seno/CountUp';
 
-type SortKey = 'terbaru' | 'terlama' | 'match' | 'az';
+// Pilihan urutan sesuai soal (logika sort dari WarRoom versi Marvel).
+type SortKey = 'newest' | 'interview' | 'offer';
 
 interface WarRoomPageProps {
   applications: Application[];
@@ -19,36 +21,64 @@ interface WarRoomPageProps {
   onAdd: () => void;
   onOpenAgenda: () => void;
   searchRef: RefObject<HTMLInputElement | null>;
+  listPage: number; // halaman daftar (0 = halaman 1), dipilih lewat tile nomor
+  onListPage: (index: number) => void;
+  onPageCount: (count: number) => void;
 }
 
+export const PER_PAGE = 5; // 5 baris, sejajar dengan 5 tile statistik di kiri
+
 const SORT_LABEL: Record<SortKey, string> = {
-  terbaru: 'Terbaru',
-  terlama: 'Terlama',
-  match: 'Match tertinggi',
-  az: 'Perusahaan A-Z',
+  newest: 'Terbaru',
+  interview: 'Jadwal Interview Terdekat',
+  offer: 'Offer Tertinggi',
 };
 
-export function WarRoomPage({ applications, kaptenSkills, onOpenDetail, onDelete, onSimulateGhosting, onAdd, onOpenAgenda, searchRef }: WarRoomPageProps) {
+export function WarRoomPage({ applications, kaptenSkills, onOpenDetail, onDelete, onSimulateGhosting, onAdd, onOpenAgenda, searchRef, listPage, onListPage, onPageCount }: WarRoomPageProps) {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<ApplicationStatus | 'ALL'>('ALL');
-  const [sort, setSort] = useState<SortKey>('terbaru');
+  const [sort, setSort] = useState<SortKey>('newest');
   const [ghostOnly, setGhostOnly] = useState(false);
 
   // Derived state: statistik dan daftar dihitung ulang dari applications setiap render.
   const stats = computeDashboardStats(applications);
   const matchOf = (a: Application) => getSkillMatch(a.requiredSkills, kaptenSkills).score;
 
-  const q = query.trim().toLowerCase();
+  // Filter gabungan dan sorting (Marvel). Hasil .filter() sudah array baru,
+  // jadi .sort() di bawah tidak mengubah state applications.
+  const search = query.trim().toLowerCase();
   const visible = applications
-    .filter((a) => status === 'ALL' || a.status === status)
-    .filter((a) => !ghostOnly || isAtRiskOfGhosting(a))
-    .filter((a) => !q || a.company.toLowerCase().includes(q) || a.role.toLowerCase().includes(q))
+    .filter((app) => {
+      const matchKeyword = app.company.toLowerCase().includes(search) || app.role.toLowerCase().includes(search);
+      const matchStatus = status === 'ALL' || app.status === status;
+      const matchGhosting = !ghostOnly || isAtRiskOfGhosting(app);
+      return matchKeyword && matchStatus && matchGhosting;
+    })
     .sort((a, b) => {
-      if (sort === 'match') return matchOf(b) - matchOf(a);
-      if (sort === 'az') return a.company.localeCompare(b.company);
-      const diff = Date.parse(b.lastUpdatedAt) - Date.parse(a.lastUpdatedAt);
-      return sort === 'terbaru' ? diff : -diff;
+      if (sort === 'interview') {
+        // Yang punya jadwal interview di atas, urut dari yang paling dekat
+        if (!a.interviewDateTime && !b.interviewDateTime) return 0;
+        if (!a.interviewDateTime) return 1;
+        if (!b.interviewDateTime) return -1;
+        return Date.parse(a.interviewDateTime) - Date.parse(b.interviewDateTime);
+      }
+      if (sort === 'offer') {
+        return (b.salaryOffer ?? 0) - (a.salaryOffer ?? 0);
+      }
+      // "newest": yang paling baru di-update di atas
+      return Date.parse(b.lastUpdatedAt) - Date.parse(a.lastUpdatedAt);
     });
+
+  // Pagination: tile nomor halaman ada di background (TileField), jadi jumlah halaman
+  // dilaporkan ke App. Ganti filter = kembali ke halaman 1.
+  const pageCount = Math.max(1, Math.ceil(visible.length / PER_PAGE));
+  const current = Math.min(listPage, pageCount - 1);
+  const shown = visible.slice(current * PER_PAGE, current * PER_PAGE + PER_PAGE);
+  useEffect(() => onPageCount(pageCount), [pageCount, onPageCount]);
+  const filterChanged = <T,>(set: (v: T) => void) => (v: T) => {
+    set(v);
+    onListPage(0);
+  };
 
   const statRows: [string, string, boolean][] = [
     ['Total lamaran', String(stats.total), false],
@@ -69,14 +99,14 @@ export function WarRoomPage({ applications, kaptenSkills, onOpenDetail, onDelete
           className="field-input"
           placeholder="Perusahaan atau posisi..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => filterChanged(setQuery)(e.target.value)}
         />
       </GridTile>
 
       <GridTile c={9} r={2} w={2} label="Filter status">
         <span className="k">&gt;/ Status</span>
         <span className="select-wrap">
-          <select value={status} onChange={(e) => setStatus(e.target.value as ApplicationStatus | 'ALL')}>
+          <select value={status} onChange={(e) => filterChanged(setStatus)(e.target.value as ApplicationStatus | 'ALL')}>
             <option value="ALL">Semua Status</option>
             {APPLICATION_STATUSES.map((s) => (
               <option key={s} value={s}>{s}</option>
@@ -88,7 +118,7 @@ export function WarRoomPage({ applications, kaptenSkills, onOpenDetail, onDelete
       <GridTile c={11} r={2} w={3} label="Urutkan">
         <span className="k">&gt;/ Urutkan</span>
         <span className="select-wrap">
-          <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className="dot">
+          <select value={sort} onChange={(e) => filterChanged(setSort)(e.target.value as SortKey)} className="dot">
             {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
               <option key={k} value={k}>{SORT_LABEL[k]}</option>
             ))}
@@ -97,20 +127,22 @@ export function WarRoomPage({ applications, kaptenSkills, onOpenDetail, onDelete
       </GridTile>
 
       <GridTile c={6} r={3} w={3} className="gt--row" label="Filter ghosting">
-        <span className="s">/ Hanya rawan ghosting</span>
+        <span className="s">Hanya rawan ghosting</span>
         <button
           type="button"
           role="switch"
           className="switch"
           aria-checked={ghostOnly}
           aria-label="Hanya rawan ghosting"
-          onClick={() => setGhostOnly((v) => !v)}
+          onClick={() => filterChanged(setGhostOnly)(!ghostOnly)}
         />
       </GridTile>
 
       <GridTile c={9} r={3} w={3} label="Jumlah lamaran">
         <span className="h2">{visible.length} lamaran</span>
-        <span className="xs muted">/ diurutkan dari yang {SORT_LABEL[sort].toLowerCase()}</span>
+        <span className="xs muted">
+          {visible.length > PER_PAGE ? `Halaman ${current + 1} dari ${pageCount}` : SORT_LABEL[sort]}
+        </span>
       </GridTile>
 
       <GridButton c={12} r={3} w={2} className="gt--center" onClick={onAdd}>
@@ -120,18 +152,19 @@ export function WarRoomPage({ applications, kaptenSkills, onOpenDetail, onDelete
       {statRows.map(([label, value, hot], i) => (
         <GridTile key={label} c={1} r={4 + i} w={5} hot={hot} className="gt--row" label={label}>
           <span className="s">{label}</span>
-          <span className="h2">{value}</span>
+          <span className="h2"><CountUp value={value} /></span>
         </GridTile>
       ))}
 
-      <div className="rows" role="list" aria-label="Daftar lamaran">
+      <div className="rows" role="list" aria-label={`Daftar lamaran, halaman ${current + 1} dari ${pageCount}`} key={current}>
         {visible.length === 0 && (
           <div className="gt cell empty-note" style={{ height: 'auto' }}>
-            <p className="h3">/ Tidak ada lamaran yang cocok</p>
-            <p className="s muted">Coba ubah kata kunci atau filter.</p>
+            <p className="s">
+              {applications.length === 0 ? 'Belum ada lamaran. Mulai dari "+ Tambah lamaran".' : 'Tidak ada lamaran yang cocok dengan filter ini.'}
+            </p>
           </div>
         )}
-        {visible.map((a, i) => (
+        {shown.map((a, i) => (
           <AppRow
             key={a.id}
             index={i}

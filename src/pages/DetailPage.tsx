@@ -30,8 +30,7 @@ export function DetailPage({ app, onUpdate, onDelete, onSimulateGhosting, onBack
   if (!app) {
     return (
       <GridTile c={6} r={1} w={8} h={2} label="Lamaran tidak ditemukan">
-        <p className="h1">/ Lamaran tidak ditemukan</p>
-        <p className="s muted">Mungkin sudah dihapus.</p>
+        <p className="v">Lamaran ini tidak ditemukan, mungkin sudah dihapus.</p>
         <button type="button" className="chip" onClick={onBack} style={{ alignSelf: 'flex-start' }}>
           <span className="chev">Kembali ke War Room</span>
         </button>
@@ -53,6 +52,7 @@ function Detail({ app, onUpdate, onDelete, onSimulateGhosting }: Omit<DetailPage
   const [error, setError] = useState<string | null>(null);
   const [task, setTask] = useState('');
   const [note, setNote] = useState('');
+  const [prepOpen, setPrepOpen] = useState(false); // panel Latihan Interview
 
   const progress = getChecklistProgress(app.checklist);
   const atRisk = isAtRiskOfGhosting(app);
@@ -84,7 +84,7 @@ function Detail({ app, onUpdate, onDelete, onSimulateGhosting }: Omit<DetailPage
   return (
     <>
       <GridTile c={6} r={1} w={4} h={2} className="gt--top" label="Lamaran">
-        <p className="h1" style={{ fontSize: 24 }}>/ {app.role}</p>
+        <p className="h1" style={{ fontSize: 24 }}>{app.role}</p>
         <p className="h3" style={{ marginTop: 8 }}>{app.company}</p>
         <p className="xs" style={{ marginTop: 'auto' }}>{app.workMode}</p>
         <p className="xs">{app.cvVersion ? `CV: ${app.cvVersion}` : 'CV belum dipilih'}</p>
@@ -191,15 +191,13 @@ function Detail({ app, onUpdate, onDelete, onSimulateGhosting }: Omit<DetailPage
       </GridButton>
 
       <GridTile c={1} r={4} w={5} h={4} className="gt--top" label="Daftar persiapan">
-        <div className="spread">
-          <span className="h2">/ Daftar persiapan</span>
-          <span className="xs">{progress.completed} / {progress.total} selesai</span>
-        </div>
+        <span className="s">
+          {progress.total === 0 ? 'Belum ada tugas persiapan.' : `${progress.completed} dari ${progress.total} tugas persiapan selesai`}
+        </span>
         <span className="seg" style={{ margin: '8px 0 6px' }}>
           {app.checklist.length === 0 ? <i /> : app.checklist.map((c) => <i key={c.id} className={c.done ? 'on' : ''} />)}
         </span>
         <div style={{ overflowY: 'auto' }}>
-          {app.checklist.length === 0 && <p className="s muted">Belum ada tugas. Tambah di bawah.</p>}
           {app.checklist.map((c) => (
             <label key={c.id} className={`check${c.done ? ' is-done' : ''}`}>
               <input type="checkbox" checked={c.done} onChange={() => run(() => toggleChecklistItem(app, c.id))} />
@@ -224,8 +222,7 @@ function Detail({ app, onUpdate, onDelete, onSimulateGhosting }: Omit<DetailPage
       </GridButton>
 
       <GridTile c={6} r={4} w={4} h={505 / 105 + 5 / 105} className="gt--top" label="Riwayat aktivitas">
-        <span className="h2">/ Riwayat aktivitas</span>
-        <ol style={{ listStyle: 'none', margin: '10px 0 0', padding: 0, overflowY: 'auto', display: 'grid', gap: 16 }}>
+        <ol style={{ listStyle: 'none', margin: 0, padding: 0, overflowY: 'auto', display: 'grid', gap: 16 }}>
           {app.activityLogs.length === 0 && <li className="s muted">Belum ada aktivitas.</li>}
           {[...app.activityLogs].reverse().map((log, i) => (
             <li key={log.id} style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 6 }}>
@@ -255,7 +252,14 @@ function Detail({ app, onUpdate, onDelete, onSimulateGhosting }: Omit<DetailPage
         </button>
       </GridTile>
 
-      <InterviewTimer />
+      {prepOpen ? (
+        <InterviewTimer onClose={() => setPrepOpen(false)} />
+      ) : (
+        <GridButton c={10} r={4} w={4} className="gt--center" onClick={() => setPrepOpen(true)}>
+          <span className="h2 chev">Buka latihan interview</span>
+          <span className="xs">5 soal, timer 02:00 per soal</span>
+        </GridButton>
+      )}
     </>
   );
 }

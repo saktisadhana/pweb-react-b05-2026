@@ -10,6 +10,7 @@
   --track: #e3e8f2;
   --green: #22a65a;
   --red: #d33a3a;
+  --amber-text: #c98700; /* kuning yang masih terbaca di atas putih (badge match 40-69%) */
   --card: rgba(255, 255, 255, 0.95);
   --card-shadow: 0 4px 24px rgba(35, 63, 124, 0.16);
   --hot-glow: 0 0 40px rgba(253, 187, 22, 0.65);
@@ -51,13 +52,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .stage-wrap { position: relative; width: 100%; overflow: clip; }
 
 .stage {
-  --mx: 0;
-  --my: 0;
-  --px: -999px;
-  --py: -999px;
-  /* Geser mask warna mengikuti mouse, jadi "cahaya" tile ikut bergerak. */
-  --dx: calc(var(--mx) * -90px);
-  --dy: calc(var(--my) * -70px);
   position: absolute;
   left: 0;
   top: 0;
@@ -72,19 +66,23 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .field { position: absolute; inset: 0; }
 
-/* ---------- Overlay Figma: fade bawah, vignette, glare ---------- */
+/* ---------- Overlay Figma: fade atas & bawah, vignette, glare ---------- */
 
 .fx i { position: absolute; pointer-events: none; }
 .fx__fade {
   left: -1px; top: 1098px; width: 1447px; height: 140px;
   background: linear-gradient(to top, var(--paper), transparent);
 }
+.fx__fade--top {
+  top: 0;
+  background: linear-gradient(to bottom, var(--paper), transparent);
+}
 .fx__vignette {
   left: 0; top: 0; width: 1440px; height: 1238px; opacity: 0.35;
   background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0), rgba(241, 248, 252, 0.7));
 }
 .fx__glare { background: radial-gradient(closest-side, #fff, rgba(255, 255, 255, 0)); }
-.fx__glare--1 { left: 327px; top: 634px; width: 608px; height: 599px; filter: blur(13px); }
+.fx__glare--1 { left: 327px; top: 634px; width: 608px; height: 599px; background: radial-gradient(closest-side, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.4) 55%, rgba(255, 255, 255, 0)); }
 .fx__glare--2 { left: 658px; top: -324px; width: 469px; height: 599px; }
 .fx__glare--3 { left: 1164px; top: -36px; width: 469px; height: 599px; }
 [data-theme='dark'] .fx__glare { opacity: 0.08; }
@@ -92,7 +90,26 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------- Tile background ---------- */
 
-.t {
+/* Warna tile digambar TileCanvas. Elemen di bawah ini hanya tombol transparen di atasnya. */
+.tiles-canvas { position: absolute; left: 0; top: 0; width: 1440px; height: 1238px; pointer-events: none; }
+
+/* Pembungkus layer tile (tidak digeser; cahaya mouse diukur relatif ke sini). */
+.field__move { position: absolute; inset: 0; }
+.spot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0));
+  will-change: transform, opacity;
+}
+[data-theme='dark'] .spot { background: radial-gradient(closest-side, rgba(253, 187, 22, 0.12), rgba(253, 187, 22, 0)); }
+
+.t-hit {
   position: absolute;
   display: block;
   margin: 0;
@@ -100,72 +117,25 @@ button, input, select, textarea { font: inherit; color: inherit; }
   border: 0;
   border-radius: 10px;
   background: none;
-  transition: transform 0.3s var(--ease), filter 0.3s var(--ease);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.25s var(--ease), transform 0.2s var(--ease);
 }
+.t-hit:hover { box-shadow: 0 10px 22px rgba(35, 63, 124, 0.22); }
+.t-hit.is-pressed { transform: scale(0.98); }
+.t-hit.is-pressed[data-show='Y'] { box-shadow: 0 0 26px rgba(253, 187, 22, 0.9); }
+.t-hit.is-pressed[data-show='B'] { box-shadow: 0 0 26px rgba(0, 80, 255, 0.5); }
 
-.t--btn { cursor: pointer; }
+.labels { z-index: 3; }
 
-.t__set { position: absolute; inset: 0; transition: opacity 0.32s var(--ease); }
-.t[data-show='B'] .t__set--Y,
-.t[data-show='Y'] .t__set--B { opacity: 0; }
-
-.t__l, .t__g, .t__n { position: absolute; inset: 0; border-radius: 10px; }
-
-/* Layer warna: opacity .5, di-mask gambar mask global (posisi mask dihitung
-   relatif ke frame, jadi tiap tile "memotong" bagian mask yang sama seperti di Figma). */
-.t__l {
-  opacity: 0.5;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  transition: opacity 0.32s var(--ease);
-}
-
-.t__b, .t__b1 {
-  background: var(--navy);
-  -webkit-mask-image: url('../assets/masks/blue.png');
-  mask-image: url('../assets/masks/blue.png');
-  -webkit-mask-size: 2210px 2281px;
-  mask-size: 2210px 2281px;
-}
-.t__b {
-  -webkit-mask-position: calc(-366px - var(--x) * 1px + var(--dx)) calc(-595px - var(--y) * 1px + var(--dy));
-  mask-position: calc(-366px - var(--x) * 1px + var(--dx)) calc(-595px - var(--y) * 1px + var(--dy));
-}
-.t__b1 {
-  -webkit-mask-position: calc(-464px - var(--x) * 1px + var(--dx)) calc(-454px - var(--y) * 1px + var(--dy));
-  mask-position: calc(-464px - var(--x) * 1px + var(--dx)) calc(-454px - var(--y) * 1px + var(--dy));
-}
-
-.t__y {
-  background: var(--amber);
-  -webkit-mask-image: url('../assets/masks/yellow.png');
-  mask-image: url('../assets/masks/yellow.png');
-  -webkit-mask-size: 2241px 2117px;
-  mask-size: 2241px 2117px;
-  -webkit-mask-position: calc(-200px - var(--x) * 1px + var(--dx)) calc(-606px - var(--y) * 1px + var(--dy));
-  mask-position: calc(-200px - var(--x) * 1px + var(--dx)) calc(-606px - var(--y) * 1px + var(--dy));
-}
-.t__y3 { opacity: 0.25; } /* grup Y3 opacity .5 x layer .5 */
-
-/* G = kaca: gradasi putih tipis + garis luar 3px gradasi radial putih. */
-.t__g { background: linear-gradient(135deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.39)); opacity: 0.5; }
-.t__g::after {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  padding: 3px;
-  border-radius: 13px;
-  background: radial-gradient(120% 120% at 78% 22%, #fff, rgba(255, 255, 255, 0) 72%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-}
-
-/* N = garis biru 9px di dalam, hanya untuk tile menu yang sedang aktif. */
-.t__n { box-shadow: inset 0 0 0 9px rgba(0, 80, 255, 0.5); opacity: 0.5; }
-.t:not(.is-current) .t__n { display: none; }
+/* Tile nomor halaman: warna digambar CSS dan diletakkan di atas overlay glare,
+   supaya tetap jelas (di Figma tile ini punya mask sendiri). */
+.t-hit--solid { z-index: 2; background: linear-gradient(135deg, rgba(35, 63, 124, 0.92), rgba(35, 63, 124, 0.55)); }
+.t-hit--solid[data-show='Y'] { background: linear-gradient(135deg, rgba(253, 187, 22, 0.95), rgba(253, 187, 22, 0.6)); }
+.t-hit--solid[aria-current='page'] { box-shadow: inset 0 0 0 9px rgba(0, 80, 255, 0.25); }
 
 .t__icon { position: absolute; pointer-events: none; user-select: none; transition: transform 0.3s var(--ease); }
+.t-hit:hover .t__icon { transform: scale(1.06); }
 
 .t__badge {
   position: absolute;
@@ -181,17 +151,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
   box-shadow: 0 0 16px rgba(253, 187, 22, 0.8);
 }
 
-/* Hover: tile sedikit naik dan bercahaya. */
-.t--btn:hover { transform: translateY(-3px); filter: drop-shadow(0 10px 18px rgba(35, 63, 124, 0.28)); }
-.t--btn:hover .t__icon { transform: scale(1.06); }
-
-/* Ditekan: warna dibalik + layer lebih pekat + glow sesuai warna baru. */
-.t.is-pressed { transform: translateY(0) scale(0.97); }
-.t.is-pressed .t__l { opacity: 0.88; }
-.t.is-pressed .t__y3 { opacity: 0.5; }
-.t.is-pressed[data-show='Y'] { filter: drop-shadow(0 0 24px rgba(253, 187, 22, 0.9)); }
-.t.is-pressed[data-show='B'] { filter: drop-shadow(0 0 24px rgba(0, 80, 255, 0.55)); }
-
 .logo {
   position: absolute;
   left: 62.7px;
@@ -200,27 +159,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
   border: 0;
   background: none;
   cursor: pointer;
-  transition: transform 0.3s var(--ease), filter 0.3s var(--ease);
+  transition: transform 0.3s var(--ease);
 }
 .logo img { display: block; }
-.logo:hover { transform: translateY(-2px); filter: drop-shadow(0 0 14px rgba(253, 187, 22, 0.7)); }
-
-/* Cahaya mengikuti mouse, di atas tile (soft-light: tile biru jadi lebih terang). */
-.spot {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 560px;
-  height: 560px;
-  pointer-events: none;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0));
-  mix-blend-mode: soft-light;
-  transform: translate(calc(var(--px) - 280px), calc(var(--py) - 280px));
-  opacity: 0;
-  transition: opacity 0.5s var(--ease);
-}
-.has-pointer .spot { opacity: 1; }
+.logo:hover { transform: translateY(-2px); }
 
 /* Tulisan tile: Bitcount Single 48px Regular, isi putih, garis luar 1px.
    Di tile biru garisnya kuning, di tile kuning garisnya biru (sesuai style 0 / 1 di Figma). */
@@ -233,12 +175,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
   transform-origin: 0 0;
   paint-order: stroke fill;
   -webkit-text-stroke: 2px var(--amber);
-  transition: -webkit-text-stroke-color 0.32s var(--ease), text-shadow 0.32s var(--ease);
+  transition: -webkit-text-stroke-color 0.32s var(--ease);
 }
 .lbl--on-navy { -webkit-text-stroke-color: var(--amber); text-shadow: 0 0 10px rgba(253, 187, 22, 0.35); }
 .lbl--on-amber { -webkit-text-stroke-color: var(--navy); text-shadow: 0 0 10px rgba(35, 63, 124, 0.25); }
 
 /* ---------- Konten (tile putih) ---------- */
+
+.contents { display: contents; }
 
 .content { position: absolute; inset: 0; pointer-events: none; }
 
@@ -289,7 +233,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .gt--navy:active:not(:disabled) { background: var(--amber); color: var(--navy); }
 .gt--navy:hover:not(:disabled) { box-shadow: var(--card-shadow), 0 0 30px rgba(0, 80, 255, 0.45); }
 
-/* Sel di dalam daftar yang bisa di-scroll (posisi ikut grid CSS, bukan absolute). */
+/* Sel di dalam daftar (posisi ikut grid CSS, bukan absolute). */
 .gt.cell { position: relative; left: auto; top: auto; width: auto; height: 100px; }
 
 /* ---------- Tipografi ---------- */
@@ -401,28 +345,22 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .check span { flex: 1; }
 .check.is-done span { color: var(--ink-soft); }
 
-/* ---------- War Room: daftar lamaran yang bisa di-scroll ---------- */
+/* ---------- War Room: daftar lamaran (5 per halaman) ---------- */
 
 .rows {
   position: absolute;
   left: 545px;
   top: 459px;
   width: 875px;
-  height: 770px;
   padding: 20px;
-  overflow-y: auto;
-  pointer-events: auto;
-  scroll-snap-type: y proximity;
-  scroll-padding: 20px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(35, 63, 124, 0.3) transparent;
+  pointer-events: none;
 }
+.rows > * { pointer-events: auto; }
 .row {
   display: grid;
   grid-template-columns: 100px 310px 100px 100px 100px 100px;
   gap: 5px;
   margin-bottom: 5px;
-  scroll-snap-align: start;
 }
 .row .gt { padding: 12px 12px; }
 .row .info { padding: 12px 16px; }
@@ -468,6 +406,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   overflow: visible;
   background: none;
 }
+.is-flow .spot { display: none; }
 .is-flow .field {
   position: fixed;
   left: 0;
@@ -477,7 +416,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
   transform-origin: 0 0;
   transform: scale(var(--fs));
 }
-.is-flow .spot { display: none; }
 .is-flow .content {
   position: relative;
   inset: auto;
@@ -510,8 +448,210 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .is-flow .row { grid-template-columns: 1fr 1fr 1fr; }
 .is-flow .row .info { grid-column: span 3; order: -1; }
 .is-flow .scrim, .is-flow .popup, .is-flow .toast { position: fixed; }
+
+/* Tombol/input di atas tile (Eksplorasi): di HP tidak ada tile di belakangnya,
+   jadi tampil sebagai baris berwarna biasa di dalam kolom. */
+.is-flow .content .lt {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  width: auto !important;
+  height: 84px !important;
+  grid-column: span 2;
+  overflow: hidden;
+}
+.is-flow .content .lt--navy { background: linear-gradient(135deg, #233f7c, rgba(35, 63, 124, 0.78)); }
+.is-flow .content .lt--amber { background: linear-gradient(135deg, #fdbb16, rgba(253, 187, 22, 0.75)); }
+.is-flow .content .lt .lbl { left: 20px !important; top: 50% !important; font-size: 30px; line-height: 1; transform: translateY(-50%); }
+.is-flow .content .lt__input { padding-left: 20px; font-size: 30px; line-height: 84px; }
 .is-flow .popup, .is-flow .toast { left: 10px; right: 10px; width: auto; top: auto; bottom: 10px; height: auto; }
 
+/* ---------- Login (frame Figma 415:2) ---------- */
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.login { position: relative; overflow: hidden; background: radial-gradient(circle at 40% 45%, #fff, #f1f8fc 70%); color: var(--navy); }
+.login__frame { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.login__move { position: absolute; inset: 0; }
+.login__bg { display: block; width: 1440px; height: 848px; user-select: none; pointer-events: none; }
+
+.lt {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.25s var(--ease), transform 0.2s var(--ease);
+}
+/* Lapisan warna kebalikan: muncul saat tile ditekan (biru -> kuning, kuning -> biru). */
+.lt::before,
+.lt::after { content: ''; position: absolute; inset: 0; border-radius: 10px; pointer-events: none; opacity: 0; transition: opacity 0.25s var(--ease); }
+.lt--navy::before { background: linear-gradient(135deg, #fdbb16, rgba(253, 187, 22, 0.8)); }
+.lt--amber::before { background: linear-gradient(135deg, #233f7c, rgba(35, 63, 124, 0.82)); }
+.lt::after { background: rgba(255, 255, 255, 0.16); }
+.lt > * { position: absolute; z-index: 1; }
+
+button.lt:hover::after { opacity: 1; }
+button.lt:hover { box-shadow: 0 10px 22px rgba(35, 63, 124, 0.22); }
+button.lt:active, button.lt[aria-pressed='true'] { transform: scale(0.98); }
+button.lt:active::before, button.lt[aria-pressed='true']::before { opacity: 1; }
+button.lt--navy:active, button.lt--navy[aria-pressed='true'] { box-shadow: 0 0 28px rgba(253, 187, 22, 0.9); }
+button.lt--amber:active, button.lt--amber[aria-pressed='true'] { box-shadow: 0 0 28px rgba(0, 80, 255, 0.5); }
+button.lt--amber:active .lbl--on-amber { -webkit-text-stroke-color: var(--amber); }
+button.lt--navy:active .lbl--on-navy { -webkit-text-stroke-color: var(--navy); }
+button.lt:disabled { cursor: progress; }
+
+.lt__icon {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 400 48px/1 var(--f-dot);
+  color: #fff;
+  -webkit-text-stroke: 1.5px var(--amber);
+  paint-order: stroke fill;
+  transition: -webkit-text-stroke-color 0.32s var(--ease);
+}
+.lt__icon.lbl--on-amber { -webkit-text-stroke-color: var(--navy); }
+/* Saat ditekan warna tile bertukar, jadi warna garis ikon ikut bertukar. */
+button.lt--amber[aria-pressed='true'] .lbl--on-amber { -webkit-text-stroke-color: var(--amber); }
+button.lt--navy[aria-pressed='true'] .lbl--on-navy { -webkit-text-stroke-color: var(--navy); }
+
+.lbl--small { font-size: 32px; line-height: 40px; }
+
+.lt--input { cursor: text; }
+.lt--input:focus-within { box-shadow: 0 0 26px rgba(253, 187, 22, 0.85); }
+.lt--input.lt--amber:focus-within { box-shadow: 0 0 26px rgba(0, 80, 255, 0.45); }
+.lt.is-error { box-shadow: 0 0 0 2px rgba(211, 58, 58, 0.75), 0 0 24px rgba(211, 58, 58, 0.35); }
+
+.lt__input {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0 22px 0 27px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  outline: none;
+  font: 400 48px/100px var(--f-dot);
+  color: #fff;
+  caret-color: #fff;
+  -webkit-text-stroke: 2px var(--amber);
+  paint-order: stroke fill;
+}
+.lt__input.lbl--on-amber { -webkit-text-stroke-color: var(--navy); }
+.lt__input::placeholder { color: #fff; opacity: 1; }
+.lt__input:focus::placeholder { opacity: 0.55; }
+.lt__input:-webkit-autofill { -webkit-text-fill-color: #fff; transition: background-color 99999s; }
+
+.lt--status { cursor: default; }
+.content .lt { pointer-events: auto; }
+.lt__note { right: 24px; bottom: 12px; font: 700 13px/1.2 var(--f-text); color: #fff; }
+.lt__detail { left: 35px; right: 20px; bottom: 9px; font: 700 12.5px/1.3 var(--f-text); color: var(--navy); }
+.lt__detail b { font-family: var(--f-dot); }
+.lt__link { position: static; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }
+
+/* ---------- Animasi ----------
+   Semua animasi hanya memakai transform / opacity (diproses GPU), jadi tidak ada
+   yang menggambar ulang canvas tile per frame. */
+:root { --pop: cubic-bezier(0.22, 1.5, 0.36, 1); }
+
+/* Tile background: muncul bergelombang (jeda --d dari posisi tile), hilang mengecil. */
+.tile-sprite { position: absolute; pointer-events: none; animation: tile-pop 0.6s var(--pop) var(--d, 0ms) backwards; }
+.tile-sprite.is-leaving { animation: tile-out 0.36s var(--ease) forwards; }
+.labels .lbl,
+.t__icon,
+.t-hit--solid { animation: tile-pop 0.6s var(--pop) var(--d, 0ms) backwards; }
+@keyframes tile-pop {
+  from { opacity: 0; transform: scale(0.5) rotate(-4deg); }
+  55% { opacity: 1; }
+}
+@keyframes tile-out { to { opacity: 0; transform: scale(0.55) rotate(3deg); } }
+
+/* Tile overlay (login, Eksplorasi) ikut muncul bergelombang. */
+.lt { animation: tile-pop 0.6s var(--pop) var(--d, 0ms) backwards; }
+.login__bg { animation: login-bg-in 1.1s var(--ease) backwards; }
+@keyframes login-bg-in { from { opacity: 0; transform: scale(1.04); } }
+
+/* Cahaya glare bergerak pelan (tile tetap diam). */
+.fx__glare { animation: glare-drift 14s ease-in-out infinite alternate; will-change: transform; }
+.fx__glare--2 { animation-duration: 18s; animation-delay: -6s; }
+.fx__glare--3 { animation-duration: 22s; animation-delay: -11s; }
+@keyframes glare-drift {
+  from { transform: translate(-24px, -8px) scale(0.96); }
+  to { transform: translate(28px, 22px) scale(1.1); }
+}
+
+/* Kilau yang lewat di logo SENO tiap beberapa detik. */
+.logo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 38%, rgba(255, 255, 255, 0.9) 50%, transparent 62%) no-repeat;
+  background-size: 250% 100%;
+  -webkit-mask: url('../assets/logo.svg') center / contain no-repeat;
+  mask: url('../assets/logo.svg') center / contain no-repeat;
+  animation: logo-shine 6s ease-in-out 1.2s infinite;
+}
+@keyframes logo-shine {
+  0% { background-position: 160% 0; }
+  35%, 100% { background-position: -60% 0; }
+}
+
+/* Badge notifikasi: lingkaran yang memancar. */
+.t__badge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 2px var(--amber);
+  animation: ping 2.2s ease-out infinite;
+}
+@keyframes ping { from { transform: scale(1); opacity: 0.8; } to { transform: scale(1.9); opacity: 0; } }
+
+/* Kartu penting (bentrok jadwal, ghosting, pemenang offer): glow bernapas. */
+section.gt.is-hot { animation: gt-in 0.55s var(--ease) var(--d, 0ms) both, hot-breathe 2.8s ease-in-out 0.6s infinite; }
+@keyframes hot-breathe { 50% { box-shadow: var(--card-shadow), 0 0 44px rgba(253, 187, 22, 0.8); } }
+
+/* Isi kartu: bar terisi dari kiri, kotak skor menyala satu per satu, chip meletup. */
+.bar > i { transform-origin: left center; animation: bar-in 0.9s var(--ease) 0.2s backwards; }
+@keyframes bar-in { from { transform: scaleX(0); } }
+.seg > i { animation: seg-in 0.4s var(--pop) backwards; }
+.seg > i:nth-child(2) { animation-delay: 70ms; }
+.seg > i:nth-child(3) { animation-delay: 105ms; }
+.seg > i:nth-child(4) { animation-delay: 140ms; }
+.seg > i:nth-child(5) { animation-delay: 175ms; }
+.seg > i:nth-child(6) { animation-delay: 210ms; }
+.seg > i:nth-child(7) { animation-delay: 245ms; }
+.seg > i:nth-child(8) { animation-delay: 280ms; }
+.seg > i:nth-child(9) { animation-delay: 315ms; }
+.seg > i:nth-child(10) { animation-delay: 350ms; }
+.seg > i:nth-child(11) { animation-delay: 385ms; }
+.seg > i:nth-child(12) { animation-delay: 420ms; }
+@keyframes seg-in { from { opacity: 0; transform: scaleY(0.2); } }
+.chip { animation: chip-in 0.35s var(--pop) backwards; }
+@keyframes chip-in { from { opacity: 0; transform: scale(0.6); } }
+.countup { font-variant-numeric: tabular-nums; }
+
+/* Jam latihan interview berdetak tiap detik selama berjalan. */
+.clock.is-running { animation: tick 1s ease-out infinite; }
+@keyframes tick { 0% { transform: scale(1.05); } 35%, 100% { transform: scale(1); } }
+
+/* Popup sedikit membesar saat muncul. */
+.gt.popup { animation-name: popup-in; animation-timing-function: var(--pop); }
+@keyframes popup-in { from { opacity: 0; transform: scale(0.9); } }
+
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

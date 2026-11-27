@@ -3,6 +3,7 @@ import { GridTile } from '../components/seno/GridTile';
 import type { Application } from '../types/application';
 import { formatRupiah, scoreOffers, WEIGHTS, type OfferScore } from '../utils/offerScore';
 import { getSkillMatch } from '../utils/application';
+import { CountUp } from '../components/seno/CountUp';
 
 interface OfferPageProps {
   applications: Application[];
@@ -29,9 +30,8 @@ export function OfferPage({ applications, kaptenSkills }: OfferPageProps) {
 
   const weights = (
     <GridTile c={1} r={5} w={5} h={4} className="gt--top" label="Bobot penilaian">
-      <span className="h1">/ Bobot penilaian</span>
-      <p className="xs" style={{ margin: '10px 0 14px' }}>
-        Setiap kategori dinilai 0-100, lalu dikali bobotnya. Total skor maksimal 100.
+      <p className="s" style={{ margin: '0 0 16px' }}>
+        Tiap kategori dinilai 0-100 lalu dikali bobotnya, jadi skor total maksimal 100.
       </p>
       {[
         ['Uang saku', WEIGHTS.salary],
@@ -51,14 +51,10 @@ export function OfferPage({ applications, kaptenSkills }: OfferPageProps) {
   if (offers.length < 2) {
     return (
       <>
-        <GridTile c={6} r={1} w={8} label="Bandingkan offer">
-          <span className="h1">/ Bandingkan Offer Magang</span>
-        </GridTile>
-        <GridTile c={6} r={2} w={8} h={3} hot label="Offer belum cukup">
-          <p className="h2">/ Butuh minimal 2 offer</p>
-          <p className="s">
-            Sekarang ada {offers.length} lamaran berstatus OFFER. Pindahkan lamaran ke OFFER dari halaman Detail
-            (isi uang saku dan mode kerja), lalu kembali ke sini.
+        <GridTile c={6} r={1} w={8} h={2} hot label="Offer belum cukup">
+          <p className="v">
+            Perbandingan butuh minimal 2 lamaran berstatus OFFER, sekarang baru ada {offers.length}. Pindahkan lamaran
+            ke OFFER dari halaman Detail (isi uang saku dan mode kerja).
           </p>
         </GridTile>
         {weights}
@@ -113,7 +109,7 @@ export function OfferPage({ applications, kaptenSkills }: OfferPageProps) {
         ))}
         <GridTile c={c} r={7} w={4} h={2} hot={isWinner && !tie} label="Total skor">
           <span className="xs">/ Total skor berbobot</span>
-          <span className="big">{fmt(s.total)}</span>
+          <span className="big"><CountUp value={fmt(s.total)} /></span>
           {isWinner && !tie && <span className="xs">/ Rekomendasi terbaik</span>}
         </GridTile>
       </>
@@ -123,16 +119,16 @@ export function OfferPage({ applications, kaptenSkills }: OfferPageProps) {
   const wa = winner === a ? sa : sb;
   const wb = winner === a ? sb : sa;
   const deltas: [string, number][] = [
-    ['/ Uang saku', (wa.salaryScore - wb.salaryScore) * WEIGHTS.salary],
-    ['/ Mode kerja', (wa.workModeScore - wb.workModeScore) * WEIGHTS.workMode],
-    ['/ Kecocokan skill', (wa.skillMatch - wb.skillMatch) * WEIGHTS.skill],
+    ['Uang saku', (wa.salaryScore - wb.salaryScore) * WEIGHTS.salary],
+    ['Mode kerja', (wa.workModeScore - wb.workModeScore) * WEIGHTS.workMode],
+    ['Kecocokan skill', (wa.skillMatch - wb.skillMatch) * WEIGHTS.skill],
   ];
   const short = (app: Application) => app.company.split(' ')[0];
 
   return (
     <>
-      <GridTile c={6} r={1} w={8} label="Bandingkan offer">
-        <span className="h1">/ Bandingkan Offer Magang</span>
+      <GridTile c={6} r={1} w={8} hot={!tie} label="Kesimpulan">
+        <span className="hx">{tie ? 'Skor kedua offer sama' : `${winner.company} unggul ${fmt(gap)} poin`}</span>
       </GridTile>
 
       {picker(6, 'Offer A', a.id, b.id, setAId)}
@@ -140,11 +136,8 @@ export function OfferPage({ applications, kaptenSkills }: OfferPageProps) {
       {column(6, a, sa, winner === a)}
       {column(10, b, sb, winner === b)}
 
-      <GridTile c={6} r={9} w={8} h={2} label="Kesimpulan">
-        <span className="h1">
-          {tie ? '/ Skor kedua offer sama' : `/ ${winner.company} unggul ${fmt(gap)} poin`}
-        </span>
-        <div className="spread" style={{ marginTop: 10 }}>
+      <GridTile c={6} r={9} w={8} h={2} label="Selisih per kategori">
+        <div className="spread">
           {deltas.map(([label, d]) => (
             <span key={label} style={{ display: 'grid', gap: 4 }}>
               <span className="xs">{label}</span>
